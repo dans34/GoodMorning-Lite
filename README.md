@@ -6,15 +6,19 @@ A local-first Android habit and routine planner inspired by the user's analysis 
 
 - Closely approximate the original app's appearance based on documented screens and user-provided screenshots.
 - Retain core habit tracking, routine planning, focus/timing, progress history, and reminders where feasible.
-- Avoid mandatory sign-in and account creation.
-- Omit billing and subscription flows.
-- Prefer on-device storage and local notifications where practical.
+- Store routines, habits, schedules, completions and progress locally; no account required.
+- Use local notifications for reminders where Android permits.
+- Exclude widgets/quick launch, social/sharing, AI/chat, accounts/cloud sync, subscriptions/paywalls, advertising, attribution and analytics.
 
 ## Status
 
 **Research and analysis stage — no replacement app implementation yet.**
 
 Initial XAPK inventory and static component indicators are recorded in [the initial analysis report](docs/findings/2026-10-14-initial-apk-analysis.md). Findings are preliminary until the relevant flows are mapped and tested.
+
+## Explicit exclusions
+
+GoodMorning-Lite will not include home-screen/lock-screen widgets or quick-launch shortcuts; sharing, social or friend features; AI analysis/chat; login, accounts or cloud sync; subscription/paywall/billing flows; or advertising, attribution and analytics SDKs. These are excluded from the project, not just deferred.
 
 ## Scope and provenance
 
