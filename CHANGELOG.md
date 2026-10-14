@@ -53,3 +53,13 @@
 - Added end-routine action, completion screen, task completion checkmarks and restart flow.
 - Persisted current task index, remaining timer duration, completion flags and routine completion locally.
 - Source is committed; Android/Gradle build and real-device timing behaviour remain unverified.
+
+
+## 2026-10-14 — Timer lifecycle hardening
+
+- Starting a routine now starts the countdown immediately instead of opening a paused timer.
+- Backgrounding the app pauses the timer and saves the remaining time, avoiding countdown drift while the activity is not visible.
+- Returning to the app restores the active task timer screen in a paused state, ready to resume.
+- Ending or finishing a routine clears the active-timer state.
+- Added a GitHub Actions workflow to compile a debug APK on pushes and pull requests, then upload the APK as a workflow artifact.
+- Build and device behaviour still require confirmation from the workflow and hands-on testing.
