@@ -47,33 +47,31 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             mkdir -p screenshots
-            {
-              echo "=== Emulator properties ==="
-              adb shell getprop ro.build.version.release
-              adb shell getprop ro.build.version.sdk
-              adb shell getprop ro.product.model
-              echo "=== Boot completion ==="
-              adb shell getprop sys.boot_completed
-              echo "=== Install ==="
-              adb install app/build/outputs/apk/debug/app-debug.apk
-              echo "=== Launch ==="
-              adb shell am force-stop com.dans34.goodmorninglite
-              adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity
-              sleep 12
-              echo "=== App process ==="
-              adb shell pidof com.dans34.goodmorninglite || true
-              echo "=== Activity processes ==="
-              adb shell dumpsys activity processes || true
-              echo "=== Memory info ==="
-              adb shell dumpsys meminfo || true
-              echo "=== Focused ANR/system errors ==="
-              adb logcat -b all -d | grep -Ei 'ANR in|not responding|system_server|FATAL EXCEPTION|am_anr|Input dispatching timed out|Watchdog|lowmemorykiller|lmkd|com\.dans34\.goodmorninglite' | tail -n 600 || true
-            } > screenshots/android-anr-diagnostics.txt 2>&1
+            echo "=== Emulator properties ===" > screenshots/android-anr-diagnostics.txt
+            adb shell getprop ro.build.version.release >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            adb shell getprop ro.build.version.sdk >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            adb shell getprop ro.product.model >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Boot completion ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell getprop sys.boot_completed >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Install ===" >> screenshots/android-anr-diagnostics.txt
+            adb install app/build/outputs/apk/debug/app-debug.apk >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Launch ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell am force-stop com.dans34.goodmorninglite >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            sleep 12
+            echo "=== App process ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell pidof com.dans34.goodmorninglite >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Activity processes ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell dumpsys activity processes >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Memory info ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell dumpsys meminfo >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Focused ANR/system errors ===" >> screenshots/android-anr-diagnostics.txt
+            adb logcat -b all -d | grep -Ei 'ANR in|not responding|system_server|FATAL EXCEPTION|am_anr|Input dispatching timed out|Watchdog|lowmemorykiller|lmkd|com\.dans34\.goodmorninglite' | tail -n 600 >> screenshots/android-anr-diagnostics.txt 2>&1 || true
             adb logcat -b all -d > screenshots/android-logcat-full.txt 2>&1 || true
             adb shell dumpsys activity > screenshots/activity-dump.txt 2>&1 || true
             adb shell dumpsys meminfo > screenshots/memory-dump.txt 2>&1 || true
-            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png
-            test -s screenshots/goodmorning-lite-first-launch.png
+            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png 2> screenshots/screenshot-error.txt || true
+            test -s screenshots/goodmorning-lite-first-launch.png || echo "Screenshot capture failed; see screenshot-error.txt" >> screenshots/android-anr-diagnostics.txt
 
       - name: Upload emulator diagnostics and screenshot
         if: always()
