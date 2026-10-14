@@ -12,9 +12,9 @@ A local-first Android habit and routine planner inspired by the user's analysis 
 
 ## Status
 
-**Research and analysis stage — no replacement app implementation yet.**
+**Starter implementation committed — build and device testing still required.**
 
-Initial XAPK inventory and static component indicators are recorded in [the initial analysis report](docs/findings/2026-10-14-initial-apk-analysis.md). Findings are preliminary until the relevant flows are mapped and tested.
+Initial XAPK inventory and static component indicators are recorded in [the initial analysis report](docs/findings/2026-10-14-initial-apk-analysis.md). The [core screen map](docs/navigation/core-screen-map.md) and [onboarding screenshot notes](docs/navigation/onboarding-screenshot-notes.md) capture the currently known navigation and visual reference.
 
 ## Explicit exclusions
 
@@ -41,6 +41,8 @@ This repository is for an independent replacement implementation informed by ana
 5. Implement persistent habits, timers, local reminders and progress history.
 6. Compare screens and behaviour against references, then refine.
 
-## Build status
+## Implementation status
 
-No APK build has been produced yet.
+A minimal native Android Studio project is now present under `app/`. It contains the four-step onboarding flow (routine choice → struggle selection → wake-up time → starter routine preview), saves setup preferences locally, and opens a basic local routine screen. The trial/paywall step is intentionally omitted.
+
+**Build status:** not yet verified in Android Studio or with Gradle; no APK build has been produced. The first routine's Start button is currently a placeholder, not a working task timer. See the changelog for this milestone.
