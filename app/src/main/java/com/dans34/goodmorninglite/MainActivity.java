@@ -6,16 +6,14 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -23,6 +21,8 @@ public class MainActivity extends Activity {
     private static final int MUTED = Color.rgb(150, 151, 158);
     private static final int PALE = Color.rgb(249, 249, 250);
     private static final int YELLOW = Color.rgb(255, 224, 0);
+    private static final int TASK_SECONDS = 120;
+
     private LinearLayout root;
     private SharedPreferences prefs;
     private int page = 0;
@@ -30,21 +30,46 @@ public class MainActivity extends Activity {
     private String struggle = "I'm not sure";
     private int wakeHour = 6;
     private int wakeMinute = 0;
-    private final List<String> struggles = new ArrayList<>();
     private final String[] tasks = {
         "Stretch and drink a glass of water",
         "Tidy up the bed",
         "Check the weather"
     };
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable ticker;
+    private int currentTask = 0;
+    private long remainingMs = TASK_SECONDS * 1000L;
+    private long deadlineMs = 0L;
+    private boolean timerRunning = false;
+    private boolean routineFinished = false;
+    private TextView countdownView;
+    private TextView taskPositionView;
+    private TextView taskTitleView;
+    private Button pauseButton;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs = getSharedPreferences("goodmorning_local", MODE_PRIVATE);
-        if (prefs.getBoolean("setup_complete", false)) {
-            showHome();
-        } else {
-            showPage();
-        }
+        routineType = prefs.getString("routine_type", routineType);
+        struggle = prefs.getString("struggle", struggle);
+        wakeHour = prefs.getInt("wake_hour", wakeHour);
+        wakeMinute = prefs.getInt("wake_minute", wakeMinute);
+        currentTask = prefs.getInt("timer_task_index", 0);
+        remainingMs = prefs.getLong("timer_remaining_ms", TASK_SECONDS * 1000L);
+        routineFinished = prefs.getBoolean("routine_finished", false);
+        if (prefs.getBoolean("setup_complete", false)) showHome();
+        else showPage();
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        persistTimer();
+        if (ticker != null) handler.removeCallbacks(ticker);
+    }
+
+    @Override protected void onDestroy() {
+        if (ticker != null) handler.removeCallbacks(ticker);
+        super.onDestroy();
     }
 
     private int dp(float value) {
@@ -72,7 +97,6 @@ public class MainActivity extends Activity {
         root = column();
         root.setBackgroundColor(Color.WHITE);
         setContentView(root);
-
         LinearLayout progress = new LinearLayout(this);
         progress.setBackgroundColor(Color.rgb(241, 241, 242));
         LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(-1, dp(8));
@@ -81,7 +105,6 @@ public class MainActivity extends Activity {
         View fill = new View(this);
         fill.setBackgroundColor(YELLOW);
         progress.addView(fill, new LinearLayout.LayoutParams(0, -1, step / 4.0f));
-
         LinearLayout bubble = new LinearLayout(this);
         bubble.setOrientation(LinearLayout.VERTICAL);
         bubble.setPadding(dp(22), dp(22), dp(22), dp(22));
@@ -104,7 +127,7 @@ public class MainActivity extends Activity {
         b.setText(label);
         b.setTextSize(16);
         b.setAllCaps(false);
-        b.setTextColor(selected ? INK : INK);
+        b.setTextColor(INK);
         b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(selected ? Color.rgb(255, 249, 199) : PALE));
         b.setMinHeight(dp(58));
         b.setOnClickListener(v -> action.run());
@@ -140,7 +163,6 @@ public class MainActivity extends Activity {
         else showPreview();
     }
 
-    // Onboarding order follows the user's screenshots: routine choice, struggle, wake time, preview.
     private void showRoutineChoice() {
         base("Which routine should we build first?", "We'll build just one for now.", 1);
         LinearLayout choices = new LinearLayout(this);
@@ -158,8 +180,7 @@ public class MainActivity extends Activity {
         ep.setMargins(dp(8), dp(18), 0, 0);
         choices.addView(evening, ep);
         root.addView(choices);
-        View spacer = new View(this);
-        root.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
+        root.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
         nextButton("Next", () -> { page = 1; showPage(); });
     }
 
@@ -173,12 +194,9 @@ public class MainActivity extends Activity {
             "I'm constantly busy without a break 🙄",
             "I feel drained and unmotivated 😮‍💨"
         };
-        for (String option : options) {
-            addChoice(option, struggle.equals(option), () -> { struggle = option; showPage(); });
-        }
+        for (String option : options) addChoice(option, struggle.equals(option), () -> { struggle = option; showPage(); });
         addChoice("I'm not sure", struggle.equals("I'm not sure"), () -> { struggle = "I'm not sure"; showPage(); });
-        View spacer = new View(this);
-        root.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
+        root.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
         nextButton("Next", () -> { page = 2; showPage(); });
     }
 
@@ -186,17 +204,14 @@ public class MainActivity extends Activity {
         base("What time do you wake up?", "Your routine will start at this time.", 3);
         TextView time = text(String.format(Locale.getDefault(), "%d:%02d %s",
             (wakeHour % 12 == 0 ? 12 : wakeHour % 12), wakeMinute, wakeHour < 12 ? "AM" : "PM"), 36, INK, true);
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-1, dp(180));
-        root.addView(time, tp);
-        Button choose = button("Choose time", false, () -> {
+        root.addView(time, new LinearLayout.LayoutParams(-1, dp(180)));
+        root.addView(button("Choose time", false, () -> {
             TimePickerDialog dialog = new TimePickerDialog(this, (view, hour, minute) -> {
                 wakeHour = hour; wakeMinute = minute; showPage();
             }, wakeHour, wakeMinute, false);
             dialog.show();
-        });
-        root.addView(choose, new LinearLayout.LayoutParams(-1, dp(56)));
-        View spacer = new View(this);
-        root.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
+        }), new LinearLayout.LayoutParams(-1, dp(56)));
+        root.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
         nextButton("Next", () -> { page = 3; showPage(); });
     }
 
@@ -219,20 +234,17 @@ public class MainActivity extends Activity {
             card.addView(task, p);
         }
         root.addView(card, new LinearLayout.LayoutParams(-1, -2));
-        View spacer = new View(this);
-        root.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
+        root.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
         nextButton("Looks good", () -> {
-            prefs.edit().putBoolean("setup_complete", true)
-                .putString("routine_type", routineType)
-                .putString("struggle", struggle)
-                .putInt("wake_hour", wakeHour)
-                .putInt("wake_minute", wakeMinute)
-                .putBoolean("routine_created", true).apply();
+            prefs.edit().putBoolean("setup_complete", true).putString("routine_type", routineType)
+                .putString("struggle", struggle).putInt("wake_hour", wakeHour)
+                .putInt("wake_minute", wakeMinute).putBoolean("routine_created", true).apply();
             showHome();
         });
     }
 
     private void showHome() {
+        if (ticker != null) handler.removeCallbacks(ticker);
         root = column();
         root.setBackgroundColor(Color.WHITE);
         setContentView(root);
@@ -244,28 +256,176 @@ public class MainActivity extends Activity {
         rp.setMargins(0, dp(32), 0, dp(12));
         root.addView(routine, rp);
         for (int i = 0; i < tasks.length; i++) {
-            addHomeTask(i, tasks[i]);
+            final int index = i;
+            addChoice((prefs.getBoolean("task_done_" + i, false) ? "✓  " : (i + 1) + "   ") + tasks[i],
+                prefs.getBoolean("task_done_" + i, false), () -> {
+                    if (prefs.getBoolean("task_done_" + index, false))
+                        prefs.edit().putBoolean("task_done_" + index, false).apply();
+                    else prefs.edit().putBoolean("task_done_" + index, true).apply();
+                    showHome();
+                });
         }
-        nextButton("Start routine", () -> {
-            prefs.edit().putInt("last_started_at", (int)(System.currentTimeMillis() / 1000L)).apply();
-            Toast.makeText(this, "Routine started. Timer screen is the next implementation step.", Toast.LENGTH_LONG).show();
-        });
-        Button reset = button("Restart onboarding", false, () -> {
-            prefs.edit().clear().apply(); page = 0; struggle = "I'm not sure"; showPage();
-        });
-        root.addView(reset);
+        if (routineFinished) {
+            TextView finished = text("Routine complete — well done!", 18, INK, true);
+            root.addView(finished);
+            nextButton("Start again", () -> startNewRoutine());
+        } else {
+            nextButton("Start routine", () -> {
+                currentTask = firstIncompleteTask();
+                if (currentTask >= tasks.length) {
+                    finishRoutine();
+                } else {
+                    remainingMs = TASK_SECONDS * 1000L;
+                    timerRunning = false;
+                    persistTimer();
+                    showTimer();
+                }
+            });
+        }
+        root.addView(button("Restart onboarding", false, () -> {
+            if (ticker != null) handler.removeCallbacks(ticker);
+            prefs.edit().clear().apply(); page = 0; struggle = "I'm not sure";
+            routineFinished = false; currentTask = 0; remainingMs = TASK_SECONDS * 1000L; showPage();
+        }));
     }
 
-    private void addHomeTask(int index, String label) {
-        Button b = button((index + 1) + "   " + label, false, () -> {
-            bToast("Task selected: " + label);
-        });
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
-        p.setMargins(0, dp(5), 0, dp(5));
-        root.addView(b, p);
+    private int firstIncompleteTask() {
+        for (int i = 0; i < tasks.length; i++) if (!prefs.getBoolean("task_done_" + i, false)) return i;
+        return tasks.length;
     }
 
-    private void bToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    private void showTimer() {
+        if (ticker != null) handler.removeCallbacks(ticker);
+        root = column();
+        root.setBackgroundColor(Color.WHITE);
+        setContentView(root);
+        root.addView(text(prefs.getString("routine_type", routineType), 20, MUTED, true));
+        taskPositionView = text("TASK " + (currentTask + 1) + " OF " + tasks.length, 14, MUTED, true);
+        LinearLayout.LayoutParams pos = new LinearLayout.LayoutParams(-1, -2);
+        pos.setMargins(0, dp(36), 0, dp(16));
+        root.addView(taskPositionView, pos);
+        taskTitleView = text(tasks[currentTask], 27, INK, true);
+        LinearLayout.LayoutParams title = new LinearLayout.LayoutParams(-1, dp(150));
+        root.addView(taskTitleView, title);
+        countdownView = text(formatTime(remainingMs), 56, INK, true);
+        LinearLayout.LayoutParams time = new LinearLayout.LayoutParams(-1, dp(130));
+        time.setMargins(0, dp(20), 0, dp(20));
+        root.addView(countdownView, time);
+        root.addView(text("Take it one step at a time.", 16, MUTED, false));
+        root.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+        pauseButton = button(timerRunning ? "Pause" : "Resume", false, () -> toggleTimer());
+        root.addView(pauseButton, new LinearLayout.LayoutParams(-1, dp(60)));
+        nextButton("Complete task  →", () -> completeCurrentTask());
+        root.addView(button("Skip task", false, () -> advanceTask(false)), new LinearLayout.LayoutParams(-1, dp(54)));
+        root.addView(button("End routine", false, () -> {
+            stopTimer(); persistTimer(); showHome();
+        }), new LinearLayout.LayoutParams(-1, dp(54)));
+        if (timerRunning) runTicker();
+    }
+
+    private void toggleTimer() {
+        if (timerRunning) {
+            remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
+            timerRunning = false;
+            if (ticker != null) handler.removeCallbacks(ticker);
+            persistTimer();
+        } else {
+            if (remainingMs <= 0) remainingMs = TASK_SECONDS * 1000L;
+            deadlineMs = System.currentTimeMillis() + remainingMs;
+            timerRunning = true;
+            persistTimer();
+        }
+        showTimer();
+    }
+
+    private void runTicker() {
+        if (ticker != null) handler.removeCallbacks(ticker);
+        ticker = new Runnable() {
+            @Override public void run() {
+                if (!timerRunning || countdownView == null) return;
+                remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
+                countdownView.setText(formatTime(remainingMs));
+                if (remainingMs <= 0) {
+                    timerRunning = false;
+                    persistTimer();
+                    Toast.makeText(MainActivity.this, "Time is up — complete the task or continue.", Toast.LENGTH_LONG).show();
+                    if (pauseButton != null) pauseButton.setText("Resume");
+                } else {
+                    handler.postDelayed(this, 250);
+                }
+            }
+        };
+        handler.post(ticker);
+    }
+
+    private String formatTime(long millis) {
+        long seconds = Math.max(0, (millis + 999) / 1000);
+        return String.format(Locale.getDefault(), "%02d:%02d", seconds / 60, seconds % 60);
+    }
+
+    private void completeCurrentTask() {
+        stopTimer();
+        prefs.edit().putBoolean("task_done_" + currentTask, true).apply();
+        advanceTask(true);
+    }
+
+    private void advanceTask(boolean completed) {
+        stopTimer();
+        if (currentTask + 1 >= tasks.length) {
+            finishRoutine();
+            return;
+        }
+        currentTask++;
+        remainingMs = TASK_SECONDS * 1000L;
+        persistTimer();
+        showTimer();
+    }
+
+    private void finishRoutine() {
+        stopTimer();
+        routineFinished = true;
+        prefs.edit().putBoolean("routine_finished", true)
+            .putLong("last_completion_time", System.currentTimeMillis()).apply();
+        showCompletion();
+    }
+
+    private void showCompletion() {
+        root = column();
+        root.setBackgroundColor(Color.WHITE);
+        setContentView(root);
+        root.addView(text("You're all done!", 30, INK, true));
+        root.addView(text("You completed your routine.", 17, MUTED, false));
+        int completed = 0;
+        for (int i = 0; i < tasks.length; i++) if (prefs.getBoolean("task_done_" + i, false)) completed++;
+        root.addView(text(completed + " of " + tasks.length + " tasks completed", 20, INK, true));
+        root.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+        nextButton("Back to Today", () -> showHome());
+        root.addView(button("Run again", false, () -> startNewRoutine()));
+    }
+
+    private void startNewRoutine() {
+        stopTimer();
+        currentTask = 0;
+        remainingMs = TASK_SECONDS * 1000L;
+        routineFinished = false;
+        SharedPreferences.Editor edit = prefs.edit().putBoolean("routine_finished", false)
+            .putInt("timer_task_index", 0).putLong("timer_remaining_ms", remainingMs);
+        for (int i = 0; i < tasks.length; i++) edit.putBoolean("task_done_" + i, false);
+        edit.apply();
+        showHome();
+    }
+
+    private void stopTimer() {
+        timerRunning = false;
+        if (ticker != null) handler.removeCallbacks(ticker);
+        ticker = null;
+    }
+
+    private void persistTimer() {
+        if (timerRunning) remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
+        prefs.edit().putInt("timer_task_index", currentTask)
+            .putLong("timer_remaining_ms", remainingMs)
+            .putBoolean("timer_running", timerRunning)
+            .putBoolean("routine_finished", routineFinished).apply();
     }
 }
