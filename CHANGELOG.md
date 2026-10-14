@@ -14,3 +14,13 @@
 - Marked accounts, subscriptions, social/sharing and remote AI analysis for removal or deferral.
 - Documented the declared permission surface and a minimal-permission approach for the replacement.
 - Explicitly recorded which findings remain unverified until runtime screen walkthroughs and device tests.
+
+## 2026-10-14 — Scope exclusions confirmed
+
+- Explicitly excluded widgets and quick-launch features.
+- Explicitly excluded social, friends and sharing.
+- Explicitly excluded AI analysis/chat and related service integrations.
+- Explicitly excluded accounts, login and cloud sync.
+- Explicitly excluded subscriptions, paywalls and billing.
+- Explicitly excluded advertising, attribution and analytics SDKs.
+- Kept the product focus on local routines, habits, timers, reminders and locally calculated progress.
