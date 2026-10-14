@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,17 +41,18 @@ jobs:
       - name: Launch app in Android emulator and capture screenshot
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 30
           arch: x86_64
           profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             mkdir -p screenshots
             adb install app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.dans34.goodmorninglite
             adb shell am start -n com.dans34.goodmorninglite/.MainActivity
-            sleep 5
-            adb shell screencap -p /sdcard/goodmorning-lite-first-launch.png
-            adb pull /sdcard/goodmorning-lite-first-launch.png screenshots/goodmorning-lite-first-launch.png
+            sleep 8
+            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png
+            test -s screenshots/goodmorning-lite-first-launch.png
 
       - name: Upload real emulator screenshot
         uses: actions/upload-artifact@v4
