@@ -57,12 +57,27 @@ public class MainActivity extends Activity {
         currentTask = prefs.getInt("timer_task_index", 0);
         remainingMs = prefs.getLong("timer_remaining_ms", TASK_SECONDS * 1000L);
         routineFinished = prefs.getBoolean("routine_finished", false);
-        if (prefs.getBoolean("setup_complete", false)) showHome();
-        else showPage();
+        boolean setupComplete = prefs.getBoolean("setup_complete", false);
+        boolean timerScreenActive = prefs.getBoolean("timer_screen_active", false);
+        if (setupComplete && timerScreenActive && !routineFinished
+                && currentTask >= 0 && currentTask < tasks.length) {
+            timerRunning = false;
+            showTimer();
+        } else if (setupComplete) {
+            showHome();
+        } else {
+            showPage();
+        }
     }
 
     @Override protected void onPause() {
         super.onPause();
+        // Pause the countdown while the app is backgrounded. Keep the timer screen
+        // active so returning to the app restores the same task and remaining time.
+        if (timerRunning) {
+            remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
+            timerRunning = false;
+        }
         persistTimer();
         if (ticker != null) handler.removeCallbacks(ticker);
     }
@@ -276,7 +291,9 @@ public class MainActivity extends Activity {
                     finishRoutine();
                 } else {
                     remainingMs = TASK_SECONDS * 1000L;
-                    timerRunning = false;
+                    deadlineMs = System.currentTimeMillis() + remainingMs;
+                    timerRunning = true;
+                    prefs.edit().putBoolean("timer_screen_active", true).apply();
                     persistTimer();
                     showTimer();
                 }
@@ -318,7 +335,10 @@ public class MainActivity extends Activity {
         nextButton("Complete task  →", () -> completeCurrentTask());
         root.addView(button("Skip task", false, () -> advanceTask(false)), new LinearLayout.LayoutParams(-1, dp(54)));
         root.addView(button("End routine", false, () -> {
-            stopTimer(); persistTimer(); showHome();
+            stopTimer();
+            prefs.edit().putBoolean("timer_screen_active", false).apply();
+            persistTimer();
+            showHome();
         }), new LinearLayout.LayoutParams(-1, dp(54)));
         if (timerRunning) runTicker();
     }
@@ -383,6 +403,7 @@ public class MainActivity extends Activity {
 
     private void finishRoutine() {
         stopTimer();
+        prefs.edit().putBoolean("timer_screen_active", false).apply();
         routineFinished = true;
         prefs.edit().putBoolean("routine_finished", true)
             .putLong("last_completion_time", System.currentTimeMillis()).apply();
@@ -408,6 +429,7 @@ public class MainActivity extends Activity {
         currentTask = 0;
         remainingMs = TASK_SECONDS * 1000L;
         routineFinished = false;
+        prefs.edit().putBoolean("timer_screen_active", false).apply();
         SharedPreferences.Editor edit = prefs.edit().putBoolean("routine_finished", false)
             .putInt("timer_task_index", 0).putLong("timer_remaining_ms", remainingMs);
         for (int i = 0; i < tasks.length; i++) edit.putBoolean("task_done_" + i, false);
