@@ -78,6 +78,8 @@ public class MainActivity extends Activity {
             remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
             timerRunning = false;
         }
+        if (countdownView != null) countdownView.setText(formatTime(remainingMs));
+        if (pauseButton != null) pauseButton.setText("Resume");
         persistTimer();
         if (ticker != null) handler.removeCallbacks(ticker);
     }
