@@ -6,3 +6,11 @@
 - Added initial static APK analysis notes for Routinery version 3.30.0.
 - Recorded the XAPK split inventory and high-level technology/dependency indicators.
 - No clone source implementation or build artifact yet.
+
+## 2026-10-14 — Initial APK analysis completed
+
+- Added a feature and dependency inventory based on package metadata and extracted bundle strings.
+- Classified routine planning, routine execution, habits/streaks, timers, reminders and basic progress as core local-first clone scope.
+- Marked accounts, subscriptions, social/sharing and remote AI analysis for removal or deferral.
+- Documented the declared permission surface and a minimal-permission approach for the replacement.
+- Explicitly recorded which findings remain unverified until runtime screen walkthroughs and device tests.
