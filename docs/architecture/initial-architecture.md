@@ -24,3 +24,17 @@ Do not infer a pixel-exact design from bundled resource names. Gather screenshot
 ## Account and billing simplification
 
 The replacement should have no mandatory identity provider, account creation, paywall, subscription SDK or Play Billing dependency. Features that are fundamentally cloud-backed in the reference should be replaced by local equivalents where feasible, or documented as intentionally omitted. Do not simply skip server authorization checks in the original app.
+
+
+## Explicit scope exclusions
+
+The following are **not part of GoodMorning-Lite**, now or as planned follow-on work:
+
+- Home-screen/lock-screen widgets and quick-launch shortcuts.
+- Sharing, social features, friends and public routines.
+- AI analysis, AI chat, image-based analysis and AI service integrations.
+- Login, user accounts, profiles and cloud/cross-device synchronisation.
+- Subscription/paywall screens, in-app purchases, billing and restore-purchase flows.
+- Advertising, attribution, ad identifiers and analytics SDKs.
+
+Do not add SDKs, permissions, navigation destinations, database fields or settings solely to support these excluded features. The app should work as a standalone, local-first tool. Basic progress and insights are calculated from the user's locally stored routine and habit history; they are not AI features or analytics telemetry.
