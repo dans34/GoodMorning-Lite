@@ -36,3 +36,12 @@
 
 - Updated the screenshot notes to reflect the user-confirmed sequence: choose morning/evening routine, choose struggle, set wake-up time, preview routine, then the original paywall screen.
 - GoodMorning-Lite omits step 5 and proceeds into the app.
+
+## 2026-10-14 — Android starter project committed
+
+- Added Gradle Kotlin DSL project configuration and Android manifest.
+- Added a native Java starter activity with onboarding in the user-confirmed order: choose routine, choose struggle, set wake-up time, preview routine.
+- Added local SharedPreferences persistence for setup choices and a basic routine home screen.
+- Deliberately omitted the trial/paywall screen and all excluded SDK/service integrations.
+- Added `.gitignore` for local Android Studio and build output.
+- Build not yet verified; routine execution/timer is not implemented yet.
