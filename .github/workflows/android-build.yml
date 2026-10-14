@@ -44,7 +44,7 @@ jobs:
           api-level: 30
           arch: x86_64
           profile: pixel_2
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
             mkdir -p screenshots
             echo "=== Emulator properties ===" > screenshots/android-anr-diagnostics.txt
@@ -65,6 +65,10 @@ jobs:
             adb shell dumpsys activity processes >> screenshots/android-anr-diagnostics.txt 2>&1 || true
             echo "=== Memory info ===" >> screenshots/android-anr-diagnostics.txt
             adb shell dumpsys meminfo >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== Last ANR report ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell dumpsys activity lastanr >> screenshots/android-anr-diagnostics.txt 2>&1 || true
+            echo "=== ANR trace directory listing ===" >> screenshots/android-anr-diagnostics.txt
+            adb shell ls -la /data/anr >> screenshots/android-anr-diagnostics.txt 2>&1 || true
             echo "=== Focused ANR/system errors ===" >> screenshots/android-anr-diagnostics.txt
             adb logcat -b all -d | grep -Ei 'ANR in|not responding|system_server|FATAL EXCEPTION|am_anr|Input dispatching timed out|Watchdog|lowmemorykiller|lmkd|com\.dans34\.goodmorninglite' | tail -n 600 >> screenshots/android-anr-diagnostics.txt 2>&1 || true
             adb logcat -b all -d > screenshots/android-logcat-full.txt 2>&1 || true
