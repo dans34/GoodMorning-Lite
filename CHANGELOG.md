@@ -45,3 +45,11 @@
 - Deliberately omitted the trial/paywall screen and all excluded SDK/service integrations.
 - Added `.gitignore` for local Android Studio and build output.
 - Build not yet verified; routine execution/timer is not implemented yet.
+
+## 2026-10-14 — Routine timer and task progression
+
+- Replaced the Start routine placeholder with a task-by-task timer screen.
+- Added a two-minute starter duration per sample task, live countdown, pause/resume, complete-task and skip-task actions.
+- Added end-routine action, completion screen, task completion checkmarks and restart flow.
+- Persisted current task index, remaining timer duration, completion flags and routine completion locally.
+- Source is committed; Android/Gradle build and real-device timing behaviour remain unverified.
