@@ -4,25 +4,23 @@
 **Date recorded:** 2026-10-14
 **Evidence:** Direct visual observation of five screenshots. These establish the shown onboarding states, but not the full app navigation.
 
-## Screenshot inventory
+## Screenshot inventory (corrected to the supplied navigation order)
 
-1. **What do you struggle with?** — multi-choice onboarding question with six options and an “I'm not sure” action; yellow progress indicator; disabled Next until a selection is made.
-2. **Which routine should we build first?** — choice between Morning routine and Evening routine, represented by large illustrated cards.
-3. **What time do you wake up?** — wheel-style time selector showing 6:00 AM; yellow progress fill and dark Next button.
-4. **This is how your day starts** — preview for a 6:00am morning routine, six minutes total, with three tasks: stretch and drink water, tidy the bed, and check the weather; a Looks good button.
-5. **Free for 7 days!** — subscription/trial screen with close control, trial timeline, annual price and Try for £0 button. Documented only to identify and exclude it from GoodMorning-Lite.
+1. **Which routine should we build first?** — choice between Morning routine and Evening routine, represented by large illustrated cards. Original filename: `1000036010 (002).jpg`.
+2. **What do you struggle with?** — multi-choice onboarding question with six options and an “I'm not sure” action; yellow progress indicator; disabled Next until a selection is made. Original filename: `1000036012 (002).jpg`.
+3. **What time do you wake up?** — wheel-style time selector showing 6:00 AM; yellow progress fill and dark Next button. Original filename: `1000036011 (002).jpg`.
+4. **This is how your day starts** — preview for a 6:00am morning routine, six minutes total, with three tasks: stretch and drink water, tidy the bed, and check the weather; a Looks good button. Original filename: `1000036013 (002).jpg`.
+5. **Free for 7 days!** — subscription/trial screen with close control, trial timeline, annual price and Try for £0 button. Documented only to identify and exclude it from GoodMorning-Lite. Original filename: `1000036014 (002).jpg`.
 
-Original uploaded filenames, in the order above: `1000036012 (002).jpg`, `1000036010 (002).jpg`, `1000036011 (002).jpg`, `1000036013 (002).jpg`, and `1000036014 (002).jpg`.
+## Observed onboarding sequence (user-confirmed order)
 
-## Observed onboarding sequence
-
-1. Ask what the user struggles with.
-2. Ask whether to build a morning or evening routine first.
+1. Ask whether to build a morning or evening routine first.
+2. Ask what the user struggles with.
 3. Ask the wake-up time (shown at 6:00 AM).
 4. Preview the suggested routine and ask the user to confirm it.
-5. A trial/paywall screen appears in the supplied flow.
+5. The original flow then shows a trial/paywall screen; GoodMorning-Lite will omit this screen and continue into the app.
 
-This order is inferred from the screenshot set and progress bars; the screenshots do not prove there are no intermediate screens.
+The user confirmed the order as **2, 1, 3, 4, 5** relative to the initially supplied screenshot list. The screenshots do not prove there are no intermediate screens.
 
 ## UI observations
 
