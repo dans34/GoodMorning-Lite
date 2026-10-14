@@ -45,4 +45,4 @@ This repository is for an independent replacement implementation informed by ana
 
 A minimal native Android Studio project is now present under `app/`. It contains the four-step onboarding flow (routine choice → struggle selection → wake-up time → starter routine preview), saves setup preferences locally, and opens a basic local routine screen. The trial/paywall step is intentionally omitted.
 
-**Build status:** not yet verified in Android Studio or with Gradle; no APK build has been produced. The first routine's Start button is currently a placeholder, not a working task timer. See the changelog for this milestone.
+**Build status:** not yet verified in Android Studio or with Gradle; no APK build has been produced. The starter routine now has a task-by-task countdown, pause/resume, complete/skip actions, end-routine control, a completion screen, and local task completion persistence. Each sample task currently uses a two-minute timer. The source is committed, but the Android/Gradle build and real-device behaviour have not yet been verified. See the changelog for this milestone.
