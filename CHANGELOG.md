@@ -31,3 +31,8 @@
 - Added proposed navigation diagram and four core user journeys.
 - Marked routes as static-evidence-backed or inferred; runtime screen order and exact UI remain to be verified.
 - Kept all six previously agreed feature groups excluded.
+
+## 2026-10-14 — Onboarding order corrected
+
+- Updated the screenshot notes to reflect the user-confirmed sequence: choose morning/evening routine, choose struggle, set wake-up time, preview routine, then the original paywall screen.
+- GoodMorning-Lite omits step 5 and proceeds into the app.
