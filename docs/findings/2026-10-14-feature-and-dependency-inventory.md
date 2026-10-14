@@ -42,12 +42,12 @@ These are static feature indicators, not proof of a complete UI or offline opera
 | Calendar | Calendar account instructions and calendar permissions | **Optional:** start with in-app schedules; external calendar integration later if wanted |
 | Progress/analysis | Routine analysis, insights, streak summaries and performance/focus references | **Core basic version:** calculate from local history; defer remote AI analysis |
 | Onboarding/personalisation | Onboarding steps and questions about routine type, sleep, concerns and goals | **Simplify:** optional local setup with a skip path |
-| Widgets/quick launch | References to home/lock-screen widgets for starting routines | **Later:** not required for the first usable release |
-| Sharing/social/friends | Friend requests, routine sharing, public routines and social copy | **Out of initial scope:** likely account/server dependent |
-| AI analysis/chat | AI routine analysis, chat, image upload and analysis endpoint strings | **Out of initial scope:** remote dependency, not required for core planning |
-| Account and sync | Login, sign-up, profile, account management and cross-device sync wording | **Remove from clone:** no mandatory account |
-| Subscription/paywall | Premium plans, free trials, restore purchase, subscription management and billing indicators | **Remove from clone:** no billing SDK or paywall |
-| Advertising/attribution/analytics | Ad ID, AppLovin, Firebase, Amplitude, Airbridge and install-referrer indicators | **Remove unless explicitly needed:** minimise data collection |
+| Widgets/quick launch | References to home/lock-screen widgets for starting routines | **Excluded:** no widgets or quick-launch shortcuts |
+| Sharing/social/friends | Friend requests, routine sharing, public routines and social copy | **Excluded entirely:** no social, friend, or sharing features |
+| AI analysis/chat | AI routine analysis, chat, image upload and analysis endpoint strings | **Excluded entirely:** no AI/chat feature or AI service integration |
+| Account and sync | Login, sign-up, profile, account management and cross-device sync wording | **Excluded entirely:** no login, accounts, profiles, or cloud sync |
+| Subscription/paywall | Premium plans, free trials, restore purchase, subscription management and billing indicators | **Excluded entirely:** no paywall, purchases, subscriptions, or billing |
+| Advertising/attribution/analytics | Ad ID, AppLovin, Firebase, Amplitude, Airbridge and install-referrer indicators | **Excluded entirely:** no advertising, attribution, or analytics SDKs |
 
 ## Android permissions and integrations
 
@@ -69,7 +69,7 @@ Do not inherit calendar, location, camera, overlay, advertising, billing or stor
 2. **Strings are discovery evidence, not a call graph:** they identify candidate features but do not prove active paths, screen placement or backend requirements.
 3. **Visual matching needs screenshots:** extracted strings and colour literals cannot establish exact layouts, spacing, navigation, animations or rendered states.
 4. **Timer/reminder reliability is a key risk:** Android background execution, notification permissions, exact-alarm restrictions and battery optimisation can affect delivery; test on a real device.
-5. **Keep core data local:** routines, ordered tasks, durations, schedules, completion history, streaks and basic insights can be modelled on-device. Sync/social/AI must not block core use.
+5. **Keep core data local:** routines, ordered tasks, durations, schedules, completion history, streaks and basic insights can be modelled on-device. Widgets, social/sharing, AI/chat, accounts/cloud sync, subscriptions/paywalls, advertising, attribution and analytics are excluded from the replacement.
 6. **Keep the repository clean:** do not commit the reference APK/XAPK, extracted proprietary code, or proprietary assets. Commit analysis observations and independently written implementation only.
 
 ## Confirmed versus not yet confirmed
