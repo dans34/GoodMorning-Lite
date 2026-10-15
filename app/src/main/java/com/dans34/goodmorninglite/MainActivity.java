@@ -333,7 +333,7 @@ public class MainActivity extends Activity {
         startScreen();root.setGravity(Gravity.CENTER);
         TextView heart=text("♥",64,Color.rgb(220,65,100),true);
         LinearLayout.LayoutParams heartParams=new LinearLayout.LayoutParams(-1,dp(94));heartParams.bottomMargin=dp(18);root.addView(heart,heartParams);
-        TextView message=text("My dearest Ronni,\nYou are my partner, my world & my future.\n\nThis is what happens when a nerd falls in love with a cute, kind and amazing farmer's daughter.\n\nWith oodies of love,\n\nYour Dan",21,INK,false);
+        TextView message=text("My dearest Ronni,\nYou are my partner, my world & my future.\n\nThis is what happens when a nerd falls in love with a cute, kind and amazing farmer's daughter.\n\nWith oodles of love,\n\nYour Dan",21,INK,false);
         message.setGravity(Gravity.CENTER);message.setLineSpacing(dp(5),1.0f);root.addView(message,new LinearLayout.LayoutParams(-1,-2));
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(28)));
         primary("♥  Back to Manage Routines",this::showManageRoutines);
