@@ -429,7 +429,14 @@ public class MainActivity extends Activity {
         EditText name=new EditText(this);name.setHint("What do you want to do?");name.setSingleLine(true);name.setText(old.name);form.addView(name,new LinearLayout.LayoutParams(-1,dp(52)));
         TextView durationLabel=text("DURATION (MINUTES)",12,MUTED,true);durationLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams durationLabelParams=new LinearLayout.LayoutParams(-1,-2);durationLabelParams.topMargin=dp(10);form.addView(durationLabel,durationLabelParams);
-        EditText minutes=new EditText(this);minutes.setHint("e.g. 5");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setSingleLine(true);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes,new LinearLayout.LayoutParams(-1,dp(52)));
+        android.widget.NumberPicker minutes=new android.widget.NumberPicker(this);
+        minutes.setMinValue(1);minutes.setMaxValue(240);minutes.setValue(Math.max(1,Math.min(240,(old.seconds+59)/60)));
+        minutes.setWrapSelectorWheel(false);
+        LinearLayout durationPickerRow=new LinearLayout(this);durationPickerRow.setOrientation(0);durationPickerRow.setGravity(Gravity.CENTER_VERTICAL);
+        durationPickerRow.addView(minutes,new LinearLayout.LayoutParams(dp(100),dp(112)));
+        TextView minutesUnit=text("minutes",15,MUTED,false);minutesUnit.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams minutesUnitParams=new LinearLayout.LayoutParams(-2,-1);minutesUnitParams.leftMargin=dp(8);durationPickerRow.addView(minutesUnit,minutesUnitParams);
+        form.addView(durationPickerRow);
         TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams notesLabelParams=new LinearLayout.LayoutParams(-1,-2);notesLabelParams.topMargin=dp(10);form.addView(notesLabel,notesLabelParams);
         EditText notes=new EditText(this);notes.setHint("Add a helpful reminder");notes.setMinLines(2);notes.setGravity(Gravity.TOP|Gravity.START);notes.setText(old.notes);form.addView(notes,new LinearLayout.LayoutParams(-1,dp(82)));
@@ -454,8 +461,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
             String n=name.getText().toString().trim();
             if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
-            int mins;try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=2;}
-            mins=Math.max(1,Math.min(240,mins));
+            int mins=Math.max(1,Math.min(240,minutes.getValue()));
             Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),activePeriod):new Task(old.id,n,mins*60,notes.getText().toString().trim(),old.period);
             t.emoji=chosenEmoji[0];
             if(add)tasks.add(t);else tasks.set(index,t);
