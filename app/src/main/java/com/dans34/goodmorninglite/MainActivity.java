@@ -302,7 +302,7 @@ public class MainActivity extends Activity {
     }
     private void returnToRoutinePage(){if(managePageOpen)showManageRoutines();else showHome();}
     private int firstIncomplete(){ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)if(!prefs.getBoolean(doneKey(list.get(i)),false))return i;return list.size();}
-    private void taskActions(int index){String[] options={"Edit task","Move up","Move down","Delete task"};new AlertDialog.Builder(this).setTitle(tasks.get(index).name).setItems(options,(d,which)->{if(which==0)editTask(index);else if(which==1&&index>0&&tasks.get(index-1).period.equals(tasks.get(index).period)){Task t=tasks.remove(index);tasks.add(index-1,t);saveTasks();returnToRoutinePage();}else if(which==2&&index<tasks.size()-1&&tasks.get(index+1).period.equals(tasks.get(index).period)){Task t=tasks.remove(index);tasks.add(index+1,t);saveTasks();returnToRoutinePage();}else if(which==3)new AlertDialog.Builder(this).setMessage("Delete this task?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(dd,w)->{String removedId=tasks.get(index).id;tasks.remove(index);prefs.edit().remove("done_"+removedId).apply();saveTasks();returnToRoutinePage();}).show();}).show();}
+    private void taskActions(int index){if(index>=0&&index<tasks.size())editTask(index);}
     private void showAddTaskType(){showTaskLibrary();}
 
     private static class LibraryTask {
@@ -388,21 +388,10 @@ public class MainActivity extends Activity {
         showTaskLibrary();
     }
     private void showCustomTaskForm(String period){
-        startScreen();heading("Create a task","Make it your own for your "+period.toLowerCase(Locale.ROOT)+" routine.");
-        EditText name=new EditText(this);name.setHint("What do you want to do?");name.setSingleLine(true);root.addView(name,new LinearLayout.LayoutParams(-1,dp(56)));
-        TextView durationLabel=text("DURATION (MINUTES)",12,MUTED,true);durationLabel.setGravity(Gravity.START);LinearLayout.LayoutParams dl=new LinearLayout.LayoutParams(-1,-2);dl.topMargin=dp(14);root.addView(durationLabel,dl);
-        EditText minutes=new EditText(this);minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText("5");minutes.setSingleLine(true);root.addView(minutes,new LinearLayout.LayoutParams(-1,dp(56)));
-        TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);LinearLayout.LayoutParams nl=new LinearLayout.LayoutParams(-1,-2);nl.topMargin=dp(14);root.addView(notesLabel,nl);
-        EditText notes=new EditText(this);notes.setHint("Add a helpful reminder");notes.setMinLines(2);notes.setGravity(Gravity.TOP|Gravity.START);root.addView(notes,new LinearLayout.LayoutParams(-1,dp(92)));
-        root.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
-        primary("Save task",()->{
-            String n=name.getText().toString().trim();if(n.isEmpty()){name.setError("Enter a task name");return;}
-            int mins;try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=5;}
-            mins=Math.max(1,Math.min(240,mins));tasks.add(new Task(n,mins*60,notes.getText().toString().trim(),period));saveTasks();
-            Toast.makeText(this,"Added to "+period+" routine",Toast.LENGTH_SHORT).show();
-            if(managePageOpen)showManageRoutines();else showHome();
-        });
-        addButton("Cancel",this::showTaskLibrary);
+        activePeriod=period;
+        routineType=period+" routine";
+        prefs.edit().putString("active_period",activePeriod).putString("routine_type",routineType).apply();
+        editTask(-1);
     }
     private void editTaskForPeriod(String period){
         final EditText name=new EditText(this);
