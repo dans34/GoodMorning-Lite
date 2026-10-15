@@ -131,3 +131,12 @@
 
 - Changed the build identity timestamp to UK day/month/year format (`dd/MM/yyyy HH:mm:ss`) to match the app's established date display convention.
 - Not yet rebuilt or verified on the Nokia C12.
+
+
+## 2026-10-15 — Original task library and routine templates
+
+- Added a Routine Templates entry to the existing Add a Task screen while preserving the existing task categories.
+- Added four original templates: Gentle Morning, Ready to Focus, Wind Down, and Ready to Leave.
+- Each template shows its icon, title, description, task count, total duration, and a preview of individual task descriptions and suggested minutes.
+- Adding a template creates editable task copies in the currently selected routine; users can then reorder, edit or delete them using existing routine management.
+- Android Studio build and Nokia C12 behaviour have not yet been verified for this change.
