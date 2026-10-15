@@ -424,9 +424,15 @@ public class MainActivity extends Activity {
         boolean add=index<0;
         Task old=add?new Task("",DEFAULT_SECONDS,"",activePeriod):tasks.get(index);
         LinearLayout form=new LinearLayout(this);form.setPadding(dp(20),dp(8),dp(20),0);form.setOrientation(1);
-        EditText name=new EditText(this);name.setHint("Task name");name.setSingleLine(true);name.setText(old.name);form.addView(name);
-        EditText minutes=new EditText(this);minutes.setHint("Duration in minutes");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes);
-        EditText notes=new EditText(this);notes.setHint("Notes (optional)");notes.setMinLines(2);notes.setText(old.notes);form.addView(notes);
+        TextView nameLabel=text("TASK NAME",12,MUTED,true);nameLabel.setGravity(Gravity.START);
+        LinearLayout.LayoutParams nameLabelParams=new LinearLayout.LayoutParams(-1,-2);nameLabelParams.topMargin=dp(6);form.addView(nameLabel,nameLabelParams);
+        EditText name=new EditText(this);name.setHint("What do you want to do?");name.setSingleLine(true);name.setText(old.name);form.addView(name,new LinearLayout.LayoutParams(-1,dp(52)));
+        TextView durationLabel=text("DURATION (MINUTES)",12,MUTED,true);durationLabel.setGravity(Gravity.START);
+        LinearLayout.LayoutParams durationLabelParams=new LinearLayout.LayoutParams(-1,-2);durationLabelParams.topMargin=dp(10);form.addView(durationLabel,durationLabelParams);
+        EditText minutes=new EditText(this);minutes.setHint("e.g. 5");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setSingleLine(true);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes,new LinearLayout.LayoutParams(-1,dp(52)));
+        TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);
+        LinearLayout.LayoutParams notesLabelParams=new LinearLayout.LayoutParams(-1,-2);notesLabelParams.topMargin=dp(10);form.addView(notesLabel,notesLabelParams);
+        EditText notes=new EditText(this);notes.setHint("Add a helpful reminder");notes.setMinLines(2);notes.setGravity(Gravity.TOP|Gravity.START);notes.setText(old.notes);form.addView(notes,new LinearLayout.LayoutParams(-1,dp(82)));
         final String[] chosenEmoji={old.emoji==null||old.emoji.isEmpty()?emojiForTaskName(old.name):old.emoji};
         LinearLayout emojiSection=new LinearLayout(this);emojiSection.setOrientation(1);
         TextView emojiLabel=text("TASK ICON",12,MUTED,true);emojiLabel.setGravity(Gravity.START);
