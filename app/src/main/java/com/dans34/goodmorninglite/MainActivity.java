@@ -131,8 +131,6 @@ public class MainActivity extends Activity {
             remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;
             prefs.edit().putBoolean("timer_screen_active",true).apply();persistTimer();showTimer();
         });
-        LinearLayout.LayoutParams manageLinkParams=new LinearLayout.LayoutParams(-1,-2);manageLinkParams.setMargins(0,dp(18),0,dp(4));
-        root.addView(button("⚙  Manage routines  ›",this::showManageRoutines),manageLinkParams);
     }
     private boolean managePageOpen=false;
     private void showManageRoutines(){
