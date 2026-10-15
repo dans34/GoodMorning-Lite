@@ -497,28 +497,22 @@ public class MainActivity extends Activity {
         root.post(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);});
     }
     private void showConfetti(boolean grand,View origin,Runnable onFinished){
-        // Draw directly into the current screen's ViewGroupOverlay. This avoids
-        // adding a normal child view to the ScrollView/content hierarchy.
-        ViewGroup host=root;
-        if(host==null){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
-        host.post(()->{
+        // Keep the animation inside the timer face itself; this avoids window,
+        // decor and content overlays entirely.
+        if(origin==null){
+            if(onFinished!=null)handler.postDelayed(onFinished,grand?1600:1200);
+            return;
+        }
+        origin.post(()->{
             if(isFinishing()||isDestroyed()){if(onFinished!=null)onFinished.run();return;}
-            int width=host.getWidth(),height=host.getHeight();
+            int width=origin.getWidth(),height=origin.getHeight();
             if(width<=0||height<=0){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
             ConfettiBurst burst=new ConfettiBurst(grand);
             burst.layout(0,0,width,height);
-            if(origin!=null){
-                int[] location=new int[2];origin.getLocationOnScreen(location);
-                int[] hostLocation=new int[2];host.getLocationOnScreen(hostLocation);
-                burst.setBurstCenter(location[0]-hostLocation[0]+origin.getWidth()/2f,
-                    location[1]-hostLocation[1]+origin.getHeight()/2f);
-            }else{
-                burst.setBurstCenter(width/2f,height*0.38f);
-            }
-            android.view.ViewGroupOverlay overlay=host.getOverlay();
+            burst.setBurstCenter(width/2f,height/2f);
+            android.view.ViewOverlay overlay=origin.getOverlay();
             overlay.add(burst);
             burst.setProgress(0.01f);
-            burst.invalidate();
             long duration=grand?1600:1200;
             ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);
             animator.setDuration(duration);
