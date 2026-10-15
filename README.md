@@ -12,9 +12,11 @@ A local-first Android habit and routine planner inspired by the user's analysis 
 
 ## Status
 
-**Starter implementation committed — build and device testing still required.**
+**V1 Alpha — working baseline tested on a Nokia C12.**
 
-Initial XAPK inventory and static component indicators are recorded in [the initial analysis report](docs/findings/2026-10-14-initial-apk-analysis.md). The [core screen map](docs/navigation/core-screen-map.md) and [onboarding screenshot notes](docs/navigation/onboarding-screenshot-notes.md) capture the currently known navigation and visual reference.
+The current alpha includes local routine management, task timers, partial-session support through “Just get started”, routine history, full-completion streaks and a gentle rolling seven-day consistency measure. The user has confirmed the latest “Just get started” and History & Streaks changes work on the Nokia C12. This is an early alpha, not a final release; continue testing as features are added.
+
+Initial XAPK inventory and static component indicators are recorded in [the initial analysis report](docs/findings/2026-10-14-initial-apk-analysis.md). The [core screen map](docs/navigation/core-screen-map.md) and [onboarding screenshot notes](docs/navigation/onboarding-screenshot-notes.md) capture the known navigation and visual reference.
 
 ## Explicit exclusions
 
@@ -43,6 +45,6 @@ This repository is for an independent replacement implementation informed by ana
 
 ## Implementation status
 
-A minimal native Android Studio project is now present under `app/`. It contains the four-step onboarding flow (routine choice → struggle selection → wake-up time → starter routine preview), saves setup preferences locally, and opens a basic local routine screen. The trial/paywall step is intentionally omitted.
+The native Android Studio project under `app/` includes onboarding, local routine/task management, task timers, pause/resume, complete/skip/end controls, a completion summary, routine history, streaks and seven-day consistency tracking. “Just get started” lets the user complete one task and then either finish for now or continue. The trial/paywall step and the other explicitly excluded online/social/commercial features remain omitted.
 
-**Build status:** not yet verified in Android Studio or with Gradle; no APK build has been produced. The starter routine now has a task-by-task countdown, pause/resume, complete/skip actions, end-routine control, a completion screen, and local task completion persistence. Each sample task currently uses a two-minute timer. The source is committed, but the Android/Gradle build and real-device behaviour have not yet been verified. See the changelog for this milestone.
+**Version:** `1.0-alpha` (V1 Alpha). The user has confirmed the latest feature changes work on a Nokia C12. The assistant has not independently verified a fresh Gradle build for this version; build the current source in Android Studio before distributing an APK. See `CHANGELOG.md` for the milestone history.
