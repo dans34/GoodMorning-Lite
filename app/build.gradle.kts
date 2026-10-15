@@ -22,7 +22,7 @@ val gitCommit = gitValue("rev-parse", "HEAD", fallback = "unknown")
 val gitStatus = gitValue("status", "--porcelain", fallback = "unknown")
 val gitDirtyKnown = gitStatus != "unknown"
 val gitDirty = gitDirtyKnown && gitStatus.isNotEmpty()
-val buildDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+val buildDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
 
 android {
     namespace = "com.dans34.goodmorninglite"
