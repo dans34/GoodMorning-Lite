@@ -97,3 +97,11 @@
 - Added a seven-day activity row and clearer individual session cards showing routine, date, task count and elapsed time.
 - Kept history stored locally and reused the existing session records; no new permissions or online services added.
 - Build and Nokia C12 behaviour still need to be checked in Android Studio.
+
+## 2026-10-15 — Just get started mode
+
+- Added a secondary “Just get started” action on Today, alongside the regular Start routine button.
+- Starts at the first unfinished task and, after that task is completed, offers “Finish for now” or “Continue routine”.
+- Finishing for now uses the existing completion summary and saves a partial session to local history; completed task flags are preserved.
+- Persisted the mode while the task timer is active so it survives ordinary activity recreation.
+- Source committed; Android Studio build and Nokia C12 behaviour still need user verification.
