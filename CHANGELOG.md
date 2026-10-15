@@ -119,3 +119,10 @@
 - Set the Android app version name to `1.0-alpha` (version code remains 1).
 - Updated the README to describe the current feature set and the user-confirmed Nokia C12 test status.
 - This is an alpha baseline, not a claim that a fresh build or formal GitHub release has been verified.
+
+## 2026-10-15 — Build identity in Manage Routines
+
+- Added a small tappable build/version label at the bottom of Manage Routines.
+- The build details dialog shows the app version, build date, full Git commit hash, working-tree cleanliness, and a GitHub commit link; it also allows copying the full hash.
+- Gradle injects Git metadata at build time and records whether uncommitted changes were present. Unknown metadata is identified rather than assumed clean.
+- Not yet built or verified in Android Studio or on the Nokia C12.
