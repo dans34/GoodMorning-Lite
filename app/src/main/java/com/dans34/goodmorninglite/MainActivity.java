@@ -486,7 +486,6 @@ public class MainActivity extends Activity {
         int done=0,totalSeconds=0;for(Task task:list){if(prefs.getBoolean(doneKey(task),false)){done++;totalSeconds+=task.seconds;}}
         boolean allCompleted=!list.isEmpty()&&done==list.size();
         heading(allCompleted?"🎉 Routine complete!":"Routine finished",allCompleted?"Every task completed — brilliant work!":"You made time for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.");
-        if(allCompleted)postGrandCelebration();
         long started=prefs.getLong("routine_start_time",System.currentTimeMillis());long elapsed=Math.max(0,(System.currentTimeMillis()-started)/1000L);
         saveRoutineSession(activePeriod,done,list.size(),elapsed);
         root.addView(text(done+" of "+list.size()+" tasks completed",21,INK,true));
