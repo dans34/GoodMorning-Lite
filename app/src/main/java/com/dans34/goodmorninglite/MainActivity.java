@@ -558,25 +558,166 @@ public class MainActivity extends Activity {
         prefs.edit().putString("routine_history",history.toString()).putString("routine_session_saved_id",currentId).apply();
     }
     private void showHistory(){
-        startScreen();heading("History & streaks","Celebrate the routines you complete.");
-        JSONArray history=historyArray();java.util.HashSet<String> activeDates=new java.util.HashSet<>();int sessions=0,fullSessions=0;
-        long now=System.currentTimeMillis();String today=todayKey(now);
-        for(int i=0;i<history.length();i++){JSONObject o=history.optJSONObject(i);if(o==null)continue;sessions++;if(o.optBoolean("full",false)){fullSessions++;activeDates.add(o.optString("date",""));}}
-        int streak=0;java.util.Calendar day=java.util.Calendar.getInstance();day.setTimeInMillis(now);
-        if(!activeDates.contains(today))day.add(java.util.Calendar.DAY_OF_YEAR,-1);
-        while(activeDates.contains(todayKey(day.getTimeInMillis()))&&streak<3660){streak++;day.add(java.util.Calendar.DAY_OF_YEAR,-1);}
-        root.addView(text(String.valueOf(streak),42,INK,true));
-        root.addView(text("day streak",16,MUTED,false));
-        LinearLayout.LayoutParams gap=new LinearLayout.LayoutParams(-1,-2);gap.topMargin=dp(12);gap.bottomMargin=dp(12);
-        root.addView(text(fullSessions+" completed routines  ·  "+sessions+" sessions recorded",15,INK,false),gap);
-        TextView weekly=text("THIS WEEK",13,MUTED,true);weekly.setGravity(Gravity.START);root.addView(weekly);
-        java.util.Calendar cal=java.util.Calendar.getInstance();cal.set(java.util.Calendar.DAY_OF_WEEK,cal.getFirstDayOfWeek());
-        StringBuilder week=new StringBuilder();
-        for(int d=0;d<7;d++){String date=todayKey(cal.getTimeInMillis());if(d>0)week.append("   ");week.append(new java.text.SimpleDateFormat("EEE",Locale.US).format(cal.getTime())).append(" ").append(activeDates.contains(date)?"✓":"·");cal.add(java.util.Calendar.DAY_OF_YEAR,1);}
-        root.addView(text(week.toString(),15,INK,false),gap);
-        TextView recent=text("RECENT SESSIONS",13,MUTED,true);recent.setGravity(Gravity.START);root.addView(recent);
-        int shown=0;for(int i=history.length()-1;i>=0&&shown<20;i--){JSONObject o=history.optJSONObject(i);if(o==null)continue;String label=o.optString("period","Routine")+" · "+o.optString("date","")+"\n"+o.optInt("done",0)+"/"+o.optInt("total",0)+" tasks · "+duration((int)o.optLong("elapsed",0))+(o.optBoolean("full",false)?" · Completed":" · Partial");TextView sessionRow=text(label,14,INK,false);sessionRow.setGravity(Gravity.START);sessionRow.setPadding(dp(10),dp(10),dp(10),dp(10));root.addView(sessionRow,new LinearLayout.LayoutParams(-1,-2));shown++;}
-        if(shown==0)root.addView(text("Your completed routines will appear here.",15,MUTED,false));
+        startScreen();
+        heading("History & streaks","See your progress, one routine at a time.");
+
+        JSONArray history=historyArray();
+        java.util.HashSet<String> activeDates=new java.util.HashSet<>();
+        int sessions=0,fullSessions=0;
+        long now=System.currentTimeMillis();
+        java.util.Calendar weekStart=java.util.Calendar.getInstance();
+        weekStart.setTimeInMillis(now);
+        weekStart.set(java.util.Calendar.HOUR_OF_DAY,0);
+        weekStart.set(java.util.Calendar.MINUTE,0);
+        weekStart.set(java.util.Calendar.SECOND,0);
+        weekStart.set(java.util.Calendar.MILLISECOND,0);
+        weekStart.set(java.util.Calendar.DAY_OF_WEEK,weekStart.getFirstDayOfWeek());
+        long weekStartMs=weekStart.getTimeInMillis();
+        int weekSessions=0,weekFull=0,weekTasksDone=0,weekTasksTotal=0;
+        java.util.HashSet<String> weekActiveDates=new java.util.HashSet<>();
+
+        for(int i=0;i<history.length();i++){
+            JSONObject o=history.optJSONObject(i);
+            if(o==null)continue;
+            sessions++;
+            boolean full=o.optBoolean("full",false);
+            String date=o.optString("date","");
+            if(full){fullSessions++;activeDates.add(date);}
+            long timestamp=o.optLong("timestamp",0L);
+            if(timestamp>=weekStartMs && timestamp<=now){
+                weekSessions++;
+                if(full){weekFull++;weekActiveDates.add(date);}
+                weekTasksDone+=Math.max(0,o.optInt("done",0));
+                weekTasksTotal+=Math.max(0,o.optInt("total",0));
+            }
+        }
+
+        int streak=0;
+        java.util.Calendar day=java.util.Calendar.getInstance();
+        day.setTimeInMillis(now);
+        if(!activeDates.contains(todayKey(now)))day.add(java.util.Calendar.DAY_OF_YEAR,-1);
+        while(activeDates.contains(todayKey(day.getTimeInMillis()))&&streak<3660){
+            streak++;
+            day.add(java.util.Calendar.DAY_OF_YEAR,-1);
+        }
+
+        LinearLayout streakCard=new LinearLayout(this);
+        streakCard.setOrientation(1);
+        streakCard.setGravity(Gravity.CENTER);
+        streakCard.setPadding(dp(16),dp(14),dp(16),dp(14));
+        android.graphics.drawable.GradientDrawable streakBg=new android.graphics.drawable.GradientDrawable();
+        streakBg.setColor(Color.rgb(255,248,190));
+        streakBg.setCornerRadius(dp(16));
+        streakCard.setBackground(streakBg);
+        streakCard.addView(text("🔥  "+streak,36,INK,true));
+        TextView streakCaption=text("DAY STREAK",12,INK,true);
+        LinearLayout.LayoutParams streakCaptionParams=new LinearLayout.LayoutParams(-1,-2);
+        streakCaptionParams.topMargin=dp(2);
+        streakCard.addView(streakCaption,streakCaptionParams);
+        TextView streakInfo=text(" "+fullSessions+" fully completed routines overall",13,INK,false);
+        LinearLayout.LayoutParams streakInfoParams=new LinearLayout.LayoutParams(-1,-2);
+        streakInfoParams.topMargin=dp(6);
+        streakCard.addView(streakInfo,streakInfoParams);
+        LinearLayout.LayoutParams streakCardParams=new LinearLayout.LayoutParams(-1,-2);
+        streakCardParams.bottomMargin=dp(14);
+        root.addView(streakCard,streakCardParams);
+
+        TextView weekTitle=text("THIS WEEK",13,MUTED,true);
+        weekTitle.setGravity(Gravity.START);
+        root.addView(weekTitle);
+        int completionRate=weekTasksTotal==0?0:Math.round(100f*weekTasksDone/weekTasksTotal);
+
+        LinearLayout weekCard=new LinearLayout(this);
+        weekCard.setOrientation(1);
+        weekCard.setPadding(dp(14),dp(12),dp(14),dp(12));
+        android.graphics.drawable.GradientDrawable weekBg=new android.graphics.drawable.GradientDrawable();
+        weekBg.setColor(Color.rgb(249,249,250));
+        weekBg.setCornerRadius(dp(14));
+        weekCard.setBackground(weekBg);
+
+        LinearLayout metrics=new LinearLayout(this);
+        metrics.setOrientation(0);
+        String[][] metricData={{String.valueOf(weekFull),"Completed"},{String.valueOf(weekSessions),"Sessions"},{completionRate+"%","Task rate"}};
+        for(String[] metric:metricData){
+            LinearLayout metricBox=new LinearLayout(this);
+            metricBox.setOrientation(1);
+            metricBox.setGravity(Gravity.CENTER);
+            metricBox.addView(text(metric[0],22,INK,true));
+            TextView metricLabel=text(metric[1],11,MUTED,false);
+            LinearLayout.LayoutParams metricLabelParams=new LinearLayout.LayoutParams(-1,-2);
+            metricLabelParams.topMargin=dp(2);
+            metricBox.addView(metricLabel,metricLabelParams);
+            metrics.addView(metricBox,new LinearLayout.LayoutParams(0,-2,1));
+        }
+        weekCard.addView(metrics);
+        View metricDivider=new View(this);
+        metricDivider.setBackgroundColor(Color.rgb(230,230,234));
+        LinearLayout.LayoutParams metricDividerParams=new LinearLayout.LayoutParams(-1,dp(1));
+        metricDividerParams.topMargin=dp(12);
+        metricDividerParams.bottomMargin=dp(10);
+        weekCard.addView(metricDivider,metricDividerParams);
+
+        java.util.Calendar cal=(java.util.Calendar)weekStart.clone();
+        LinearLayout daysRow=new LinearLayout(this);
+        daysRow.setOrientation(0);
+        for(int d=0;d<7;d++){
+            String date=todayKey(cal.getTimeInMillis());
+            boolean completed=weekActiveDates.contains(date);
+            boolean isToday=date.equals(todayKey(now));
+            LinearLayout dayBox=new LinearLayout(this);
+            dayBox.setOrientation(1);
+            dayBox.setGravity(Gravity.CENTER);
+            TextView dayMark=text(completed?"✓":(isToday?"•":"—"),18,completed?Color.rgb(55,130,85):MUTED,true);
+            dayBox.addView(dayMark,new LinearLayout.LayoutParams(-1,dp(28)));
+            TextView dayName=text(new java.text.SimpleDateFormat("EEE",Locale.US).format(cal.getTime()),11,INK,isToday);
+            dayBox.addView(dayName,new LinearLayout.LayoutParams(-1,dp(22)));
+            daysRow.addView(dayBox,new LinearLayout.LayoutParams(0,-2,1));
+            cal.add(java.util.Calendar.DAY_OF_YEAR,1);
+        }
+        weekCard.addView(daysRow);
+        LinearLayout.LayoutParams weekCardParams=new LinearLayout.LayoutParams(-1,-2);
+        weekCardParams.topMargin=dp(8);
+        weekCardParams.bottomMargin=dp(18);
+        root.addView(weekCard,weekCardParams);
+
+        TextView recent=text("RECENT SESSIONS",13,MUTED,true);
+        recent.setGravity(Gravity.START);
+        root.addView(recent);
+        int shown=0;
+        for(int i=history.length()-1;i>=0&&shown<20;i--){
+            JSONObject o=history.optJSONObject(i);
+            if(o==null)continue;
+            boolean full=o.optBoolean("full",false);
+            String period=o.optString("period","Routine");
+            String date=o.optString("date","");
+            String label=period+" routine  ·  "+date+"\\n"+
+                o.optInt("done",0)+" of "+o.optInt("total",0)+" tasks  ·  "+
+                duration((int)o.optLong("elapsed",0))+" elapsed";
+            LinearLayout sessionCard=new LinearLayout(this);
+            sessionCard.setOrientation(0);
+            sessionCard.setGravity(Gravity.CENTER_VERTICAL);
+            sessionCard.setPadding(dp(12),dp(10),dp(12),dp(10));
+            android.graphics.drawable.GradientDrawable sessionBg=new android.graphics.drawable.GradientDrawable();
+            sessionBg.setColor(Color.rgb(249,249,250));
+            sessionBg.setCornerRadius(dp(12));
+            sessionCard.setBackground(sessionBg);
+            TextView sessionDetails=text(label,13,INK,false);
+            sessionDetails.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+            sessionCard.addView(sessionDetails,new LinearLayout.LayoutParams(0,-2,1));
+            TextView sessionStatus=text(full?"✓":"◷",21,full?Color.rgb(55,130,85):MUTED,true);
+            sessionCard.addView(sessionStatus,new LinearLayout.LayoutParams(dp(30),dp(34)));
+            LinearLayout.LayoutParams sessionParams=new LinearLayout.LayoutParams(-1,-2);
+            sessionParams.topMargin=dp(6);
+            root.addView(sessionCard,sessionParams);
+            shown++;
+        }
+        if(shown==0){
+            TextView empty=text("Your routine sessions will appear here once you finish a routine.",14,MUTED,false);
+            empty.setGravity(Gravity.START);
+            LinearLayout.LayoutParams emptyParams=new LinearLayout.LayoutParams(-1,-2);
+            emptyParams.topMargin=dp(10);
+            root.addView(empty,emptyParams);
+        }
         addButton("‹ Back to Today",this::showHome);
     }
     private void startNewRoutine(){stopTimer();ArrayList<Task> list=routineTasks();SharedPreferences.Editor editor=prefs.edit();for(Task task:list)editor.remove(doneKey(task));currentTask=0;currentTaskId=list.isEmpty()?"":list.get(0).id;remainingMs=list.isEmpty()?DEFAULT_SECONDS*1000L:list.get(0).seconds*1000L;routineFinished=false;editor.putBoolean("routine_finished",false).putBoolean("timer_screen_active",false).putInt("timer_task_index",0).putString("timer_task_id",currentTaskId).putLong("timer_remaining_ms",remainingMs).apply();showHome();}
