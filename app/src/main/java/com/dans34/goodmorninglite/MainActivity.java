@@ -123,12 +123,8 @@ public class MainActivity extends Activity {
     private int firstIncomplete(){ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)if(!prefs.getBoolean(doneKey(i),false))return i;return list.size();}
     private void taskActions(int index){String[] options={"Edit task","Move up","Move down","Delete task"};new AlertDialog.Builder(this).setTitle(tasks.get(index).name).setItems(options,(d,which)->{if(which==0)editTask(index);else if(which==1&&index>0){Task t=tasks.remove(index);tasks.add(index-1,t);saveTasks();showHome();}else if(which==2&&index<tasks.size()-1){Task t=tasks.remove(index);tasks.add(index+1,t);saveTasks();showHome();}else if(which==3)new AlertDialog.Builder(this).setMessage("Delete this task?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(dd,w)->{tasks.remove(index);saveTasks();showHome();}).show();}).show();}
     private void showAddTaskType(){
-        startScreen();
-        heading("When does this task belong?","Choose a time of day for your new task.");
-        addButton("☀️  Morning",()->editTaskForPeriod("Morning"));
-        addButton("🌤️  Evening",()->editTaskForPeriod("Evening"));
-        addButton("🌙  Night",()->editTaskForPeriod("Night"));
-        addButton("Cancel",this::showHome);
+        // The home screen already identifies the active routine, so don't ask twice.
+        editTaskForPeriod(activePeriod);
     }
     private void editTaskForPeriod(String period){
         final EditText name=new EditText(this);
