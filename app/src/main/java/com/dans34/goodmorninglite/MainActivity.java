@@ -438,13 +438,14 @@ public class MainActivity extends Activity {
         EditText minutes=new EditText(this);minutes.setHint("Duration in minutes");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes);
         EditText notes=new EditText(this);notes.setHint("Notes (optional)");notes.setMinLines(2);notes.setText(old.notes);form.addView(notes);
         final String[] chosenEmoji={old.emoji==null||old.emoji.isEmpty()?emojiForTaskName(old.name):old.emoji};
-        Button emojiButton=button(chosenEmoji[0]+"  Choose task icon",()->{
+        final Button[] emojiButton={null};
+        emojiButton[0]=button(chosenEmoji[0]+"  Choose task icon",()->{
             String[] emojis={"✨","💧","🛏️","🌤️","🛒","📦","💳","🍽️","🧺","♻️","🧹","🗓️","📞","📝","🧘","🚶","🏃","📚","🌙","❤️","⭐","☕","🍎","🎯"};
             new AlertDialog.Builder(this).setTitle("Choose task icon").setItems(emojis,(dialog,which)->{
-                chosenEmoji[0]=emojis[which];emojiButton.setText(chosenEmoji[0]+"  Choose task icon");
+                chosenEmoji[0]=emojis[which];emojiButton[0].setText(chosenEmoji[0]+"  Choose task icon");
             }).show();
         });
-        form.addView(emojiButton);
+        form.addView(emojiButton[0]);
         new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
             String n=name.getText().toString().trim();
             if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
