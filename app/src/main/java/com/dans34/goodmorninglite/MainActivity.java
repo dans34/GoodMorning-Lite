@@ -15,6 +15,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
@@ -40,6 +42,7 @@ public class MainActivity extends Activity {
     private int wakeHour=6, wakeMinute=0, page=0, currentTask=0;
     private long remainingMs=DEFAULT_SECONDS*1000L, deadlineMs=0L;
     private boolean timerRunning=false, routineFinished=false;
+    private String libraryCategory="Everyday";
     private Runnable ticker;
     private TextView countdownView;
     private Button pauseButton;
@@ -147,9 +150,78 @@ public class MainActivity extends Activity {
     private void returnToRoutinePage(){if(managePageOpen)showManageRoutines();else showHome();}
     private int firstIncomplete(){ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)if(!prefs.getBoolean(doneKey(i),false))return i;return list.size();}
     private void taskActions(int index){String[] options={"Edit task","Move up","Move down","Delete task"};new AlertDialog.Builder(this).setTitle(tasks.get(index).name).setItems(options,(d,which)->{if(which==0)editTask(index);else if(which==1&&index>0){Task t=tasks.remove(index);tasks.add(index-1,t);saveTasks();returnToRoutinePage();}else if(which==2&&index<tasks.size()-1){Task t=tasks.remove(index);tasks.add(index+1,t);saveTasks();returnToRoutinePage();}else if(which==3)new AlertDialog.Builder(this).setMessage("Delete this task?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(dd,w)->{tasks.remove(index);saveTasks();returnToRoutinePage();}).show();}).show();}
-    private void showAddTaskType(){
-        // The home screen already identifies the active routine, so don't ask twice.
-        editTaskForPeriod(activePeriod);
+    private void showAddTaskType(){showTaskLibrary();}
+
+    private static class LibraryTask {
+        final String category, emoji, name, description;
+        final int minutes;
+        LibraryTask(String c,String e,String n,int m,String d){category=c;emoji=e;name=n;minutes=m;description=d;}
+    }
+    private final LibraryTask[] libraryTasks = {
+        new LibraryTask("Everyday","💧","Have a glass of water",1,"A small, easy start to the day."),
+        new LibraryTask("Everyday","🛏️","Straighten your bed",3,"Make your space feel a little calmer."),
+        new LibraryTask("Everyday","🗓️","Look over today's plans",5,"Pick out anything you don't want to forget."),
+        new LibraryTask("Home","🧹","Clear one small surface",5,"Choose a table, shelf or worktop."),
+        new LibraryTask("Home","🍽️","Wash a few dishes",10,"Tackle what's in the sink, one item at a time."),
+        new LibraryTask("Home","🧺","Start a load of washing",5,"Gather clothes and get a wash started."),
+        new LibraryTask("Home","♻️","Sort the recycling",5,"Collect recyclable items from one room."),
+        new LibraryTask("Errands","🛒","Write a shopping list",5,"Note down the essentials before heading out."),
+        new LibraryTask("Errands","📦","Prepare a parcel",10,"Pack and label something that needs sending."),
+        new LibraryTask("Errands","💳","Check an important account",5,"Review a statement or upcoming payment."),
+        new LibraryTask("People","📞","Check in with someone",10,"Send a message or make a quick call."),
+        new LibraryTask("People","💌","Send a kind note",5,"Let someone know you're thinking of them."),
+        new LibraryTask("People","📅","Arrange a catch-up",5,"Suggest a time to meet or have a chat."),
+        new LibraryTask("Movement","🧘","Stretch for a few minutes",5,"Loosen up at a comfortable pace."),
+        new LibraryTask("Movement","🚶","Take a short walk",15,"Get outside or walk around indoors."),
+        new LibraryTask("Movement","🏃","Do a quick movement break",10,"Choose an activity that suits your energy."),
+        new LibraryTask("Focus","📚","Set up your workspace",5,"Gather what you need and reduce distractions."),
+        new LibraryTask("Focus","📝","Choose the next small step",5,"Write down one action you can begin now."),
+        new LibraryTask("Focus","⏱️","Work on one thing",15,"Give one task your attention for a short block."),
+        new LibraryTask("Unwind","🌿","Take a quiet breathing break",3,"Pause and take a few comfortable breaths."),
+        new LibraryTask("Unwind","📓","Write a few thoughts down",5,"Capture what's on your mind without editing."),
+        new LibraryTask("Unwind","🌙","Prepare for tomorrow",5,"Set out one thing that will help in the morning.")
+    };
+    private void showTaskLibrary(){
+        startScreen();
+        LinearLayout top=new LinearLayout(this);top.setOrientation(0);top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title=text("Add a task",25,INK,true);title.setGravity(Gravity.START);
+        top.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        Button close=button("✕",this::showHome);close.setMinWidth(dp(44));top.addView(close);root.addView(top);
+        TextView sub=text("Choose an idea for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.",15,MUTED,false);sub.setGravity(Gravity.START);
+        LinearLayout.LayoutParams subp=new LinearLayout.LayoutParams(-1,-2);subp.topMargin=dp(6);subp.bottomMargin=dp(12);root.addView(sub,subp);
+        HorizontalScrollView tabsScroll=new HorizontalScrollView(this);tabsScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(0);
+        for(String cat:new String[]{"Everyday","Home","Errands","People","Movement","Focus","Unwind"}){
+            final String chosen=cat;Button tab=button((libraryCategory.equals(cat)?"●  ":"")+cat,()->{libraryCategory=chosen;showTaskLibrary();});
+            tab.setTextSize(13);tab.setPadding(dp(12),0,dp(12),0);
+            tab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(libraryCategory.equals(cat)?INK:PALE));
+            tab.setTextColor(libraryCategory.equals(cat)?Color.WHITE:INK);
+            LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-2,dp(42));tp.setMargins(0,0,dp(7),0);tabs.addView(tab,tp);
+        }
+        tabsScroll.addView(tabs);root.addView(tabsScroll);
+        ScrollView listScroll=new ScrollView(this);LinearLayout list=new LinearLayout(this);list.setOrientation(1);
+        for(LibraryTask item:libraryTasks)if(item.category.equals(libraryCategory)){
+            LinearLayout row=new LinearLayout(this);row.setOrientation(0);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(10),0,dp(10));
+            TextView emoji=text(item.emoji,23,INK,false);row.addView(emoji,new LinearLayout.LayoutParams(dp(42),-2));
+            LinearLayout details=new LinearLayout(this);details.setOrientation(1);
+            TextView name=text(item.name,16,INK,true);name.setGravity(Gravity.START);
+            TextView meta=text(item.minutes+" min",13,MUTED,true);meta.setGravity(Gravity.START);
+            TextView desc=text(item.description,13,MUTED,false);desc.setGravity(Gravity.START);
+            details.addView(name);LinearLayout.LayoutParams metap=new LinearLayout.LayoutParams(-1,-2);metap.topMargin=dp(2);details.addView(meta,metap);
+            LinearLayout.LayoutParams descp=new LinearLayout.LayoutParams(-1,-2);descp.topMargin=dp(3);details.addView(desc,descp);
+            row.addView(details,new LinearLayout.LayoutParams(0,-2,1));
+            Button plus=button("+",()->addLibraryTask(item));plus.setTextSize(23);plus.setMinWidth(0);plus.setMinimumWidth(0);
+            plus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));row.addView(plus,new LinearLayout.LayoutParams(dp(44),dp(44)));
+            list.addView(row,new LinearLayout.LayoutParams(-1,-2));
+            View line=new View(this);line.setBackgroundColor(Color.rgb(239,239,242));list.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
+        }
+        listScroll.addView(list);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,0,1);lp.topMargin=dp(8);root.addView(listScroll,lp);
+        primary("Create a custom task",()->editTaskForPeriod(activePeriod));
+    }
+    private void addLibraryTask(LibraryTask item){
+        tasks.add(new Task(item.name,item.minutes*60,item.description,activePeriod));saveTasks();
+        Toast.makeText(this,"Added to "+activePeriod+" routine",Toast.LENGTH_SHORT).show();
+        showTaskLibrary();
     }
     private void editTaskForPeriod(String period){
         final EditText name=new EditText(this);
