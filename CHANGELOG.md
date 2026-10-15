@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-15 — Easter egg dedication updated
+
+- Updated the Credits Easter egg with the dedication “My dearest Ronni, You are my partner, my world & my future.”
+- Preserved the remainder of the existing message.
+
 ## 2026-10-14 — Initial repository documentation
 
 - Added README with project goals, status, scope and milestones.
