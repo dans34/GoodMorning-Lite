@@ -474,37 +474,49 @@ public class MainActivity extends Activity {
     private void celebrateTask(View timerFace,Runnable onFinished){
         timerRunning=false;if(ticker!=null)handler.removeCallbacks(ticker);
         timerFace.animate().cancel();
-        timerFace.animate().scaleX(1.08f).scaleY(1.08f).setDuration(160)
-            .setInterpolator(new DecelerateInterpolator()).withEndAction(()->{
-                timerFace.animate().scaleX(1f).scaleY(1f).setDuration(180).start();
-            }).start();
         android.graphics.drawable.GradientDrawable flash=new android.graphics.drawable.GradientDrawable();
-        flash.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-        flash.setColor(YELLOW);timerFace.setBackground(flash);
-        timerFace.postDelayed(()->{
-            if(isFinishing()||isDestroyed())return;
-            android.graphics.drawable.GradientDrawable settled=new android.graphics.drawable.GradientDrawable();
-            settled.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-            settled.setColor(Color.rgb(249,249,250));timerFace.setBackground(settled);
-        },260);
-        showConfetti(false, timerFace, onFinished);
+        flash.setShape(android.graphics.drawable.GradientDrawable.OVAL);flash.setColor(YELLOW);
+        timerFace.setBackground(flash);
+        ValueAnimator pop=ValueAnimator.ofFloat(1f,1.10f,0.97f,1f);
+        pop.setDuration(360);pop.setInterpolator(new DecelerateInterpolator());
+        pop.addUpdateListener(a->{float scale=(Float)a.getAnimatedValue();timerFace.setScaleX(scale);timerFace.setScaleY(scale);});
+        pop.addListener(new android.animation.AnimatorListenerAdapter(){
+            @Override public void onAnimationEnd(android.animation.Animator animation){
+                timerFace.setScaleX(1f);timerFace.setScaleY(1f);
+                if(isFinishing()||isDestroyed())return;
+                android.graphics.drawable.GradientDrawable settled=new android.graphics.drawable.GradientDrawable();
+                settled.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                settled.setColor(Color.rgb(249,249,250));timerFace.setBackground(settled);
+                showConfetti(false,timerFace,onFinished);
+            }
+        });
+        pop.start();
     }
-    private void postGrandCelebration(){root.postDelayed(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);},120);}
+    private void postGrandCelebration(){
+        root.post(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);});
+    }
     private void showConfetti(boolean grand,View origin,Runnable onFinished){
         View decor=getWindow().getDecorView();
         if(!(decor instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
         ViewGroup host=(ViewGroup)decor;
         ConfettiBurst burst=new ConfettiBurst(grand);
-        int[] location=new int[2];
-        if(origin!=null){origin.getLocationOnScreen(location);burst.setBurstCenter(location[0]+origin.getWidth()/2f,location[1]+origin.getHeight()/2f);}
-        else burst.setBurstCenter(getResources().getDisplayMetrics().widthPixels/2f,getResources().getDisplayMetrics().heightPixels*0.38f);
+        int[] hostLocation=new int[2];host.getLocationOnScreen(hostLocation);
+        if(origin!=null){
+            int[] location=new int[2];origin.getLocationOnScreen(location);
+            burst.setBurstCenter(location[0]-hostLocation[0]+origin.getWidth()/2f,
+                location[1]-hostLocation[1]+origin.getHeight()/2f);
+        }else{
+            burst.setBurstCenter(host.getWidth()/2f,host.getHeight()*0.38f);
+        }
+        burst.setClickable(false);burst.setFocusable(false);
         host.addView(burst,new ViewGroup.LayoutParams(-1,-1));
-        long duration=grand?1150:620;
+        burst.bringToFront();
+        long duration=grand?1250:700;
         ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);animator.setDuration(duration);animator.setInterpolator(new DecelerateInterpolator());
-        animator.addUpdateListener(a->{burst.setProgress((Float)a.getAnimatedValue());});
+        animator.addUpdateListener(a->burst.setProgress((Float)a.getAnimatedValue()));
         animator.addListener(new android.animation.AnimatorListenerAdapter(){
             @Override public void onAnimationEnd(android.animation.Animator animation){
-                host.removeView(burst);
+                if(burst.getParent()==host)host.removeView(burst);
                 if(onFinished!=null&&!isFinishing()&&!isDestroyed())onFinished.run();
             }
         });
