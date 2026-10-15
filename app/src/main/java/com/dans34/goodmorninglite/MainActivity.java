@@ -547,6 +547,17 @@ public class MainActivity extends Activity {
         primary("Back to Today",this::showHome);addButton("Run again",this::startNewRoutine);
     }
     private String todayKey(long millis){return new java.text.SimpleDateFormat("dd/MM/yyyy",Locale.UK).format(new java.util.Date(millis));}
+    private String displayHistoryDate(String storedDate){
+        if(storedDate==null||storedDate.isEmpty())return "";
+        if(storedDate.matches("\\d{2}/\\d{2}/\\d{4}"))return storedDate;
+        try{
+            java.text.SimpleDateFormat oldFormat=new java.text.SimpleDateFormat("yyyy-MM-dd",Locale.US);
+            oldFormat.setLenient(false);
+            java.util.Date parsed=oldFormat.parse(storedDate);
+            if(parsed!=null)return new java.text.SimpleDateFormat("dd/MM/yyyy",Locale.UK).format(parsed);
+        }catch(Exception ignored){}
+        return storedDate;
+    }
     private JSONArray historyArray(){try{return new JSONArray(prefs.getString("routine_history","[]"));}catch(Exception e){return new JSONArray();}}
     private void saveRoutineSession(String period,int done,int total,long elapsed){
         String sessionId=prefs.getString("routine_session_saved_id","");
@@ -581,7 +592,7 @@ public class MainActivity extends Activity {
             if(o==null)continue;
             sessions++;
             boolean full=o.optBoolean("full",false);
-            String date=o.optString("date","");
+            String date=displayHistoryDate(o.optString("date",""));
             if(full){fullSessions++;activeDates.add(date);}
             long timestamp=o.optLong("timestamp",0L);
             if(timestamp>=weekStartMs && timestamp<=now){
@@ -689,7 +700,7 @@ public class MainActivity extends Activity {
             if(o==null)continue;
             boolean full=o.optBoolean("full",false);
             String period=o.optString("period","Routine");
-            String date=o.optString("date","");
+            String date=displayHistoryDate(o.optString("date",""));
             String label=period+" routine  ·  "+date+"\n"+
                 o.optInt("done",0)+" of "+o.optInt("total",0)+" tasks  ·  "+
                 duration((int)o.optLong("elapsed",0))+" elapsed";
