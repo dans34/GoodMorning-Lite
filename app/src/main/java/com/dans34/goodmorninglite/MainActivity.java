@@ -380,6 +380,12 @@ public class MainActivity extends Activity {
         Button close=button("✕",this::showHome);close.setMinWidth(dp(44));top.addView(close);root.addView(top);
         TextView sub=text("Choose an idea for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.",15,MUTED,false);sub.setGravity(Gravity.START);
         LinearLayout.LayoutParams subp=new LinearLayout.LayoutParams(-1,-2);subp.topMargin=dp(6);subp.bottomMargin=dp(12);root.addView(sub,subp);
+        Button templatesButton=button("📋  Browse routine templates  ›",this::showRoutineTemplates);
+        templatesButton.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+        templatesButton.setPadding(dp(14),0,dp(10),0);
+        templatesButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,248,210)));
+        LinearLayout.LayoutParams templatesParams=new LinearLayout.LayoutParams(-1,dp(54));
+        templatesParams.bottomMargin=dp(10);root.addView(templatesButton,templatesParams);
         HorizontalScrollView tabsScroll=new HorizontalScrollView(this);tabsScroll.setHorizontalScrollBarEnabled(false);
         tabsScroll.setFillViewport(false);
         LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(0);
@@ -419,6 +425,74 @@ public class MainActivity extends Activity {
         }
         listScroll.addView(list);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,0,1);lp.topMargin=dp(8);root.addView(listScroll,lp);
         primary("Create a custom task",()->showCustomTaskForm(activePeriod));
+    }
+    private static class RoutineTemplate {
+        final String emoji,name,description;
+        final LibraryTask[] items;
+        RoutineTemplate(String e,String n,String d,LibraryTask... tasks){emoji=e;name=n;description=d;items=tasks;}
+        int totalMinutes(){int total=0;for(LibraryTask item:items)total+=item.minutes;return total;}
+    }
+    private final RoutineTemplate[] routineTemplates = {
+        new RoutineTemplate("☀️","Gentle Morning","A low-pressure start to the day.",
+            new LibraryTask("Everyday","💧","Have a drink of water",1,"Rehydrate before getting caught up in the day."),
+            new LibraryTask("Everyday","🪟","Let the daylight in",1,"Open the curtains and take a moment to wake up."),
+            new LibraryTask("Everyday","🧼","Freshen up",3,"Wash your face and feel a little more refreshed."),
+            new LibraryTask("Movement","🧘","Stretch gently",3,"Loosen up with a few comfortable stretches."),
+            new LibraryTask("Focus","🎯","Choose today's priority",2,"Pick one thing you'd like to get done today.")),
+        new RoutineTemplate("🎯","Ready to Focus","Get organised and make a start.",
+            new LibraryTask("Home","🧹","Clear your workspace",3,"Move distractions aside and make room to work."),
+            new LibraryTask("Everyday","🥤","Prepare a drink",2,"Get water, tea or coffee ready before you begin."),
+            new LibraryTask("Focus","📝","Write down your next step",3,"Identify the first concrete action you need to take."),
+            new LibraryTask("Focus","🔕","Silence distractions",2,"Mute unnecessary notifications and close spare tabs."),
+            new LibraryTask("Focus","▶️","Start the first task",2,"Spend a couple of minutes making a start.")),
+        new RoutineTemplate("🌙","Wind Down","Ease out of the day at a comfortable pace.",
+            new LibraryTask("Unwind","📱","Put distractions away",1,"Set your phone aside or enable a quiet mode."),
+            new LibraryTask("Home","🧹","Reset one small area",4,"Tidy a surface or put a few things back in place."),
+            new LibraryTask("Everyday","🧼","Get comfortable",4,"Change into comfortable clothes or freshen up."),
+            new LibraryTask("Unwind","📖","Enjoy a quiet moment",5,"Read, listen to something relaxing or sit quietly.")),
+        new RoutineTemplate("🚪","Ready to Leave","Prepare for going out without the last-minute rush.",
+            new LibraryTask("Everyday","👕","Get dressed",3,"Put on the clothes you've chosen for the day."),
+            new LibraryTask("Errands","🎒","Check your bag",2,"Make sure your essentials are packed."),
+            new LibraryTask("Errands","🔑","Gather essentials",1,"Check keys, phone, wallet and anything needed today."),
+            new LibraryTask("Errands","🌦️","Check the weather",1,"Choose a coat, umbrella or other useful extras."),
+            new LibraryTask("Everyday","🚶","Final check",3,"Make sure everything is ready before heading out."))
+    };
+    private void showRoutineTemplates(){
+        startScreen();heading("Routine templates","Start with a complete example, then make it your own.");
+        TextView note=text("Templates add editable copies of their tasks to your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.",14,MUTED,false);
+        note.setGravity(Gravity.START);
+        LinearLayout.LayoutParams noteParams=new LinearLayout.LayoutParams(-1,-2);noteParams.bottomMargin=dp(10);root.addView(note,noteParams);
+        for(RoutineTemplate template:routineTemplates){
+            LinearLayout card=new LinearLayout(this);card.setOrientation(1);card.setPadding(dp(14),dp(12),dp(14),dp(12));
+            android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();bg.setColor(PALE);bg.setCornerRadius(dp(14));card.setBackground(bg);
+            TextView title=text(template.emoji+"  "+template.name,18,INK,true);title.setGravity(Gravity.START);card.addView(title);
+            TextView desc=text(template.description,14,MUTED,false);desc.setGravity(Gravity.START);
+            LinearLayout.LayoutParams descParams=new LinearLayout.LayoutParams(-1,-2);descParams.topMargin=dp(4);card.addView(desc,descParams);
+            TextView meta=text(template.totalMinutes()+" min  ·  "+template.items.length+" tasks",13,INK,true);meta.setGravity(Gravity.START);
+            LinearLayout.LayoutParams metaParams=new LinearLayout.LayoutParams(-1,-2);metaParams.topMargin=dp(6);card.addView(meta,metaParams);
+            Button preview=button("Preview tasks  ›",()->previewRoutineTemplate(template));preview.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+            LinearLayout.LayoutParams previewParams=new LinearLayout.LayoutParams(-1,dp(42));previewParams.topMargin=dp(8);card.addView(preview,previewParams);
+            LinearLayout.LayoutParams cardParams=new LinearLayout.LayoutParams(-1,-2);cardParams.setMargins(0,0,0,dp(10));root.addView(card,cardParams);
+        }
+        addButton("‹ Back to task library",this::showTaskLibrary);
+    }
+    private void previewRoutineTemplate(RoutineTemplate template){
+        StringBuilder details=new StringBuilder(template.description).append("\\n\\n");
+        for(LibraryTask item:template.items)details.append(item.emoji).append("  ").append(item.name).append(" — ").append(item.minutes).append(" min\\n").append("    ").append(item.description).append("\\n");
+        details.append("\\nTotal: ").append(template.totalMinutes()).append(" minutes");
+        new AlertDialog.Builder(this).setTitle(template.emoji+"  "+template.name).setMessage(details.toString())
+            .setNegativeButton("Back",null)
+            .setPositiveButton("Add to "+activePeriod,(dialog,which)->addRoutineTemplate(template))
+            .show();
+    }
+    private void addRoutineTemplate(RoutineTemplate template){
+        for(LibraryTask item:template.items){
+            Task added=new Task(item.name,item.minutes*60,item.description,activePeriod);
+            added.emoji=item.emoji;tasks.add(added);
+        }
+        saveTasks();
+        Toast.makeText(this,template.name+" added to "+activePeriod+" routine",Toast.LENGTH_SHORT).show();
+        showManageRoutines();
     }
     private void addLibraryTask(LibraryTask item){
         Task added=new Task(item.name,item.minutes*60,item.description,activePeriod);added.emoji=item.emoji;tasks.add(added);saveTasks();
