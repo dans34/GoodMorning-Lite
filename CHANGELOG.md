@@ -63,3 +63,29 @@
 - Ending or finishing a routine clears the active-timer state.
 - Added a GitHub Actions workflow to compile a debug APK on pushes and pull requests, then upload the APK as a workflow artifact.
 - Build and device behaviour still require confirmation from the workflow and hands-on testing.
+
+## 2026-10-15 — Home screen, routine management and timer polish
+
+- Made the home screen the default destination when the app launches after setup.
+- Moved the routine selector and task list into a clearer Today screen layout; kept the existing warm, minimal visual style.
+- Added a task library with categories, descriptions, suggested durations and quick-add controls.
+- Added custom task creation and task editing, including task name, duration, optional notes and a task-specific emoji.
+- Persisted task IDs and emoji selections so editing a task preserves its identity and icon.
+- Added a compact task-card layout on the home screen with task icons, durations and completion indicators.
+- Kept home task cards display-only; task editing is accessed through Manage Routines.
+- Improved Manage Routines with Morning/Evening/Night selection, compact task rows, a separate delete control with confirmation, and long-press drag-and-drop reordering within the selected routine.
+- Added drag-list auto-scroll and reduced spacing between routine task rows.
+- Added task count and estimated combined duration to the selected routine in Manage Routines.
+- Unified custom task creation and editing so both use the same editor.
+- Removed the task action menu's Edit/Move up/Move down/Delete options; tapping a task now opens the editor directly, while deletion remains available via the separate bin icon and drag-and-drop remains available for reordering.
+- Improved the task editor with explicit labels for Task Name, Duration (Minutes), Notes (Optional) and Task Icon.
+- Replaced the long emoji selection dialog with a compact six-column icon grid and selected-icon preview.
+- Added local routine history and completion streaks, plus a History shortcut in the home header.
+- Made history session entries read-only and improved the history icon.
+- Refined the active timer screen with a large pale timer circle, task emoji, progress bar, task notes and four equal-sized controls: Pause/Resume, Complete, Skip and End. Ending a routine requires confirmation.
+- Added task completion feedback and a full-routine completion summary.
+- Experimented with circle-pop and confetti celebrations, but the effect did not render reliably on the Nokia C12. Shelved and removed that animation code; task completion now advances without the custom celebration or toast.
+- Added a small credits easter egg with a personal message.
+- Improved shared screen scrolling and tightened header spacing while preserving the approved home-screen design.
+- Fixed Java source issues encountered during iteration, including a missing `GridLayout` import, a lambda button-initialisation error, and a leftover reference to the shelved celebration code.
+- Android Studio build and device behaviour should be verified after each latest change; changes have been committed to the repository, but not independently compiled by the assistant.
