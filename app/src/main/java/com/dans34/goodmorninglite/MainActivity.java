@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
         manage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
         LinearLayout.LayoutParams manageParams=new LinearLayout.LayoutParams(dp(38),dp(38));manageParams.leftMargin=dp(4);
         actions.addView(manage,manageParams);manage.setOnClickListener(v->showManageRoutines());
-        Button history=new Button(this);history.setText("↺");history.setTextSize(20);history.setAllCaps(false);history.setTextColor(INK);history.setContentDescription("History and streaks");history.setPadding(0,0,0,dp(2));history.setMinWidth(0);history.setMinimumWidth(0);history.setMinHeight(0);history.setMinimumHeight(0);history.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
+        Button history=new Button(this);history.setText("🏆");history.setTextSize(20);history.setAllCaps(false);history.setTextColor(INK);history.setContentDescription("History and streaks");history.setPadding(0,0,0,dp(2));history.setMinWidth(0);history.setMinimumWidth(0);history.setMinHeight(0);history.setMinimumHeight(0);history.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
         LinearLayout.LayoutParams historyParams=new LinearLayout.LayoutParams(dp(38),dp(38));historyParams.leftMargin=dp(4);actions.addView(history,historyParams);history.setOnClickListener(v->showHistory());
         LinearLayout.LayoutParams actionBlockParams=new LinearLayout.LayoutParams(-2,dp(42));actionBlockParams.topMargin=dp(1);header.addView(actions,actionBlockParams);
         root.addView(header);
