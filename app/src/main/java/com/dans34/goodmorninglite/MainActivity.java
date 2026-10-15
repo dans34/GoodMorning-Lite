@@ -77,9 +77,43 @@ public class MainActivity extends Activity {
     private void loadTasks(){tasks.clear();try{JSONArray a=new JSONArray(prefs.getString("routine_tasks",""));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);tasks.add(new Task(o.optString("name","Task"),Math.max(1,o.optInt("seconds",DEFAULT_SECONDS)),o.optString("notes","")));}}catch(Exception ignored){}if(tasks.isEmpty()){tasks.add(new Task("Stretch and drink a glass of water",120,""));tasks.add(new Task("Tidy up the bed",120,""));tasks.add(new Task("Check the weather",120,""));}}
     private void saveTasks(){JSONArray a=new JSONArray();for(Task t:tasks)a.put(t.json());prefs.edit().putString("routine_tasks",a.toString()).apply();}
     private String duration(int seconds){return seconds/60+" min"+(seconds%60==0?"":" "+seconds%60+" sec");}
-    private void showHome(){if(ticker!=null)handler.removeCallbacks(ticker);startScreen();heading("GoodMorning","Your routine, one step at a time.");TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);TextView rt=text(routineType,23,INK,true);rt.setGravity(Gravity.START);root.addView(rt);for(int i=0;i<tasks.size();i++){final int ix=i;addButton((prefs.getBoolean("done_"+i,false)?"✓  ": (i+1)+".  ")+tasks.get(i).name+"  ·  "+duration(tasks.get(i).seconds),()->editTask(ix));}primary("Start routine",()->{currentTask=firstIncomplete();if(currentTask>=tasks.size()){Toast.makeText(this,"All tasks are complete.",Toast.LENGTH_SHORT).show();return;}remainingMs=tasks.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;prefs.edit().putBoolean("timer_screen_active",true).apply();persistTimer();showTimer();});addButton("+ Add task",()->editTask(-1));TextView manage=text("MANAGE ROUTINE",13,MUTED,true);manage.setGravity(Gravity.START);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.setMargins(0,dp(22),0,dp(6));root.addView(manage,mp);for(int i=0;i<tasks.size();i++){final int ix=i;addButton("✏️  "+tasks.get(i).name+"  ·  ⚙️",()->taskActions(ix));}addButton("Restart routine progress",()->startNewRoutine());}
+    private void showHome(){if(ticker!=null)handler.removeCallbacks(ticker);startScreen();heading("GoodMorning","Your routine, one step at a time.");TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);TextView rt=text(routineType,23,INK,true);rt.setGravity(Gravity.START);root.addView(rt);for(int i=0;i<tasks.size();i++){final int ix=i;addButton((prefs.getBoolean("done_"+i,false)?"✓  ": (i+1)+".  ")+tasks.get(i).name+"  ·  "+duration(tasks.get(i).seconds),()->editTask(ix));}primary("Start routine",()->{currentTask=firstIncomplete();if(currentTask>=tasks.size()){Toast.makeText(this,"All tasks are complete.",Toast.LENGTH_SHORT).show();return;}remainingMs=tasks.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;prefs.edit().putBoolean("timer_screen_active",true).apply();persistTimer();showTimer();});addButton("+ Add task",()->showAddTaskType());TextView manage=text("MANAGE ROUTINE",13,MUTED,true);manage.setGravity(Gravity.START);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.setMargins(0,dp(22),0,dp(6));root.addView(manage,mp);for(int i=0;i<tasks.size();i++){final int ix=i;addButton("✏️  "+tasks.get(i).name+"  ·  ⚙️",()->taskActions(ix));}addButton("Restart routine progress",()->startNewRoutine());}
     private int firstIncomplete(){for(int i=0;i<tasks.size();i++)if(!prefs.getBoolean("done_"+i,false))return i;return tasks.size();}
     private void taskActions(int index){String[] options={"Edit task","Move up","Move down","Delete task"};new AlertDialog.Builder(this).setTitle(tasks.get(index).name).setItems(options,(d,which)->{if(which==0)editTask(index);else if(which==1&&index>0){Task t=tasks.remove(index);tasks.add(index-1,t);saveTasks();showHome();}else if(which==2&&index<tasks.size()-1){Task t=tasks.remove(index);tasks.add(index+1,t);saveTasks();showHome();}else if(which==3)new AlertDialog.Builder(this).setMessage("Delete this task?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(dd,w)->{tasks.remove(index);saveTasks();showHome();}).show();}).show();}
+    private void showAddTaskType(){
+        startScreen();
+        heading("When does this task belong?","Choose a time of day for your new task.");
+        addButton("☀️  Morning",()->editTaskForPeriod("Morning"));
+        addButton("🌤️  Evening",()->editTaskForPeriod("Evening"));
+        addButton("🌙  Night",()->editTaskForPeriod("Night"));
+        addButton("Cancel",this::showHome);
+    }
+    private void editTaskForPeriod(String period){
+        final EditText name=new EditText(this);
+        name.setHint("Task name");
+        LinearLayout form=new LinearLayout(this);
+        form.setPadding(dp(20),dp(8),dp(20),0);
+        form.setOrientation(1);
+        form.addView(name);
+        EditText minutes=new EditText(this);
+        minutes.setHint("Duration in minutes");
+        minutes.setInputType(InputType.TYPE_CLASS_NUMBER);
+        minutes.setText("2");
+        form.addView(minutes);
+        EditText notes=new EditText(this);
+        notes.setHint("Notes (optional)");
+        form.addView(notes);
+        new AlertDialog.Builder(this).setTitle(period+" task").setMessage("Add a task to your "+period.toLowerCase(Locale.ROOT)+" routine.").setView(form).setNegativeButton("Cancel",(d,w)->showHome()).setPositiveButton("Create task",(d,w)->{
+            String n=name.getText().toString().trim();
+            if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
+            int mins;
+            try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=2;}
+            mins=Math.max(1,Math.min(240,mins));
+            tasks.add(new Task(n,mins*60,notes.getText().toString().trim()));
+            saveTasks();
+            showHome();
+        }).show();
+    }
     private void editTask(int index){boolean add=index<0;Task old=add?new Task("",DEFAULT_SECONDS,""):tasks.get(index);LinearLayout form=new LinearLayout(this);form.setPadding(dp(20),dp(8),dp(20),0);form.setOrientation(1);EditText name=new EditText(this);name.setHint("Task name");name.setText(old.name);form.addView(name);EditText minutes=new EditText(this);minutes.setHint("Duration in minutes");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes);EditText notes=new EditText(this);notes.setHint("Notes (optional)");notes.setText(old.notes);form.addView(notes);new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{String n=name.getText().toString().trim();if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}int mins;try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=2;}mins=Math.max(1,Math.min(240,mins));Task t=new Task(n,mins*60,notes.getText().toString().trim());if(add)tasks.add(t);else tasks.set(index,t);saveTasks();showHome();}).show();}
     private void showTimer(){if(ticker!=null)handler.removeCallbacks(ticker);if(tasks.isEmpty()){showHome();return;}currentTask=Math.max(0,Math.min(currentTask,tasks.size()-1));startScreen();heading(routineType,"TASK "+(currentTask+1)+" OF "+tasks.size());root.addView(text(tasks.get(currentTask).name,27,INK,true));if(!tasks.get(currentTask).notes.isEmpty())root.addView(text(tasks.get(currentTask).notes,16,MUTED,false));countdownView=text(formatTime(remainingMs),54,INK,true);root.addView(countdownView,new LinearLayout.LayoutParams(-1,dp(150)));root.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));pauseButton=button(timerRunning?"Pause":"Resume",()->toggleTimer());root.addView(pauseButton);primary("Complete task →",()->{prefs.edit().putBoolean("done_"+currentTask,true).apply();nextTask();});addButton("Skip task",this::nextTask);addButton("End routine",()->{stopTimer();prefs.edit().putBoolean("timer_screen_active",false).apply();showHome();});if(timerRunning)runTicker();}
     private void toggleTimer(){if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}else{if(remainingMs<=0)remainingMs=tasks.get(currentTask).seconds*1000L;deadlineMs=System.currentTimeMillis()+remainingMs;timerRunning=true;}persistTimer();showTimer();}
