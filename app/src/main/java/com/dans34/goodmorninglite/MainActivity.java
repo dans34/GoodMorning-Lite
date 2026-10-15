@@ -462,7 +462,7 @@ public class MainActivity extends Activity {
         int controlSize=dp(60);
         Button pause=button(timerRunning?"Ⅱ":"▶",()->toggleTimer());pause.setTextSize(24);pause.setTextColor(MUTED);pause.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));pause.setMinWidth(0);pause.setMinimumWidth(0);pause.setContentDescription(timerRunning?"Pause timer":"Resume timer");
         LinearLayout.LayoutParams pauseParams=new LinearLayout.LayoutParams(controlSize,controlSize);pauseParams.setMargins(dp(4),0,dp(4),0);controls.addView(pause,pauseParams);pauseButton=pause;
-        Button complete=button("✓",()->{if(completionAnimationRunning)return;completionAnimationRunning=true;prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();Toast.makeText(this,"Task completed!",Toast.LENGTH_SHORT).show();celebrateTask(timerFace,()->{completionAnimationRunning=false;nextTask();});});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
+        Button complete=button("✓",()->{if(completionAnimationRunning)return;completionAnimationRunning=true;prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();celebrateTask(timerFace,()->{completionAnimationRunning=false;nextTask();});});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
         LinearLayout.LayoutParams completeParams=new LinearLayout.LayoutParams(controlSize,controlSize);completeParams.setMargins(dp(4),0,dp(4),0);controls.addView(complete,completeParams);
         Button skip=button("⏭",()->{Toast.makeText(this,"Task skipped",Toast.LENGTH_SHORT).show();nextTask();});skip.setTextSize(23);skip.setTextColor(MUTED);skip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));skip.setMinWidth(0);skip.setMinimumWidth(0);skip.setContentDescription("Skip task");
         LinearLayout.LayoutParams skipParams=new LinearLayout.LayoutParams(controlSize,controlSize);skipParams.setMargins(dp(4),0,dp(4),0);controls.addView(skip,skipParams);
@@ -497,9 +497,10 @@ public class MainActivity extends Activity {
         root.post(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);});
     }
     private void showConfetti(boolean grand,View origin,Runnable onFinished){
-        View content=findViewById(android.R.id.content);
-        if(!(content instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
-        ViewGroup host=(ViewGroup)content;
+        // Draw directly into the current screen's ViewGroupOverlay. This avoids
+        // adding a normal child view to the ScrollView/content hierarchy.
+        ViewGroup host=root;
+        if(host==null){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
         host.post(()->{
             if(isFinishing()||isDestroyed()){if(onFinished!=null)onFinished.run();return;}
             int width=host.getWidth(),height=host.getHeight();
@@ -514,14 +515,15 @@ public class MainActivity extends Activity {
             }else{
                 burst.setBurstCenter(width/2f,height*0.38f);
             }
-            burst.setClickable(false);burst.setFocusable(false);
             android.view.ViewGroupOverlay overlay=host.getOverlay();
             overlay.add(burst);
+            burst.setProgress(0.01f);
             burst.invalidate();
-            long duration=grand?1400:1000;
-            ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);animator.setDuration(duration);
+            long duration=grand?1600:1200;
+            ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);
+            animator.setDuration(duration);
             animator.setInterpolator(new DecelerateInterpolator());
-            animator.addUpdateListener(a->{burst.setProgress((Float)a.getAnimatedValue());host.invalidate();});
+            animator.addUpdateListener(a->burst.setProgress((Float)a.getAnimatedValue()));
             animator.addListener(new android.animation.AnimatorListenerAdapter(){
                 @Override public void onAnimationEnd(android.animation.Animator animation){
                     overlay.remove(burst);
