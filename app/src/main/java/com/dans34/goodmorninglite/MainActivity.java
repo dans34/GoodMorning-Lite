@@ -289,6 +289,44 @@ public class MainActivity extends Activity {
         Button credits=button("♥  Credits",this::showCredits);credits.setTextSize(16);credits.setTextColor(Color.rgb(190,55,85));credits.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));
         LinearLayout.LayoutParams creditParams=new LinearLayout.LayoutParams(-1,dp(48));creditParams.setMargins(0,dp(12),0,dp(4));root.addView(credits,creditParams);
         addButton("‹ Back to home",this::showHome);
+        TextView buildLabel=text("Build  ·  "+BuildConfig.VERSION_NAME+"  ·  "+shortCommit(BuildConfig.GIT_COMMIT),12,MUTED,false);
+        buildLabel.setPadding(0,dp(12),0,dp(4));
+        buildLabel.setPaintFlags(buildLabel.getPaintFlags()|android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+        buildLabel.setContentDescription("Show build and commit information");
+        buildLabel.setOnClickListener(v->showBuildInformation());
+        root.addView(buildLabel,new LinearLayout.LayoutParams(-1,dp(42)));
+    }
+    private String shortCommit(String hash){
+        if(hash==null||hash.isEmpty()||hash.equals("unknown"))return "unknown";
+        return hash.length()>7?hash.substring(0,7):hash;
+    }
+    private void showBuildInformation(){
+        String hash=BuildConfig.GIT_COMMIT==null?"unknown":BuildConfig.GIT_COMMIT;
+        String date=BuildConfig.BUILD_DATE==null?"unknown":BuildConfig.BUILD_DATE;
+        String dirty=BuildConfig.GIT_DIRTY?"Yes — this build included uncommitted local changes.":"No — the working tree was clean when built.";
+        String message="Version: "+BuildConfig.VERSION_NAME+
+            "\\nBuild date: "+date+
+            "\\nFull commit: "+hash+
+            "\\nWorking tree: "+dirty;
+        AlertDialog dialog=new AlertDialog.Builder(this)
+            .setTitle("Build information")
+            .setMessage(message)
+            .setNegativeButton("Close",null)
+            .setNeutralButton("Copy commit",null)
+            .setPositiveButton("View on GitHub",null)
+            .create();
+        dialog.setOnShowListener(ignored->{
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->{
+                android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                if(clipboard!=null){clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Git commit",hash));Toast.makeText(this,"Commit hash copied",Toast.LENGTH_SHORT).show();}
+            });
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+                if(hash.equals("unknown")){Toast.makeText(this,"Commit information is unavailable for this build.",Toast.LENGTH_SHORT).show();return;}
+                try{startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/dans34/GoodMorning-Lite/commit/"+hash)));}
+                catch(Exception e){Toast.makeText(this,"Could not open GitHub.",Toast.LENGTH_SHORT).show();}
+            });
+        });
+        dialog.show();
     }
     private int globalTaskIndexForId(String id){for(int i=0;i<tasks.size();i++)if(tasks.get(i).id.equals(id))return i;return -1;}
     private void showCredits(){
