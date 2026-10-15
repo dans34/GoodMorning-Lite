@@ -199,7 +199,7 @@ public class MainActivity extends Activity {
                     case android.view.DragEvent.ACTION_DRAG_ENTERED:view.setBackgroundColor(Color.rgb(255,248,190));return true;
                     case android.view.DragEvent.ACTION_DRAG_EXITED:view.setBackgroundColor(Color.TRANSPARENT);return true;
                     case android.view.DragEvent.ACTION_DRAG_ENDED:view.setBackgroundColor(Color.TRANSPARENT);return true;
-                    case android.view.DragEvent.ACTION_DRAG_DROP:
+                    case android.view.DragEvent.ACTION_DROP:
                         String sourceId=(String)event.getLocalState();String targetId=(String)view.getTag();
                         if(sourceId.equals(targetId))return true;
                         int sourceIndex=globalTaskIndexForId(sourceId);int targetIndex=globalTaskIndexForId(targetId);
