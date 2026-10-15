@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
     private LinearLayout root;
+    private ScrollView screenScroll;
     private String routineType="Morning routine", activePeriod="Morning", struggle="I'm not sure";
     private int wakeHour=6, wakeMinute=0, page=0, currentTask=0;
     private long remainingMs=DEFAULT_SECONDS*1000L, deadlineMs=0L;
@@ -77,7 +78,7 @@ public class MainActivity extends Activity {
     private int dp(float v){return (int)(v*getResources().getDisplayMetrics().density+0.5f);}
     private TextView text(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setGravity(Gravity.CENTER);if(bold)t.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));return t;}
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(1);l.setPadding(dp(22),dp(16),dp(22),dp(16));return l;}
-    private void startScreen(){ScrollView screenScroll=new ScrollView(this);screenScroll.setFillViewport(true);screenScroll.setClipToPadding(false);root=column();root.setBackgroundColor(Color.WHITE);screenScroll.addView(root,new ScrollView.LayoutParams(-1,-2));setContentView(screenScroll);}
+    private void startScreen(){screenScroll=new ScrollView(this);screenScroll.setFillViewport(true);screenScroll.setClipToPadding(false);root=column();root.setBackgroundColor(Color.WHITE);screenScroll.addView(root,new ScrollView.LayoutParams(-1,-2));setContentView(screenScroll);}
     private void heading(String title,String sub){TextView h=text(title,25,INK,true);h.setGravity(Gravity.START);root.addView(h);TextView s=text(sub,15,MUTED,false);s.setGravity(Gravity.START);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(7),0,dp(18));root.addView(s,p);}
     private Button button(String label,Runnable action){Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setAllCaps(false);b.setTextColor(INK);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));b.setMinHeight(dp(48));b.setOnClickListener(v->action.run());return b;}
     private void addButton(String label,Runnable action){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(4),0,dp(4));root.addView(button(label,action),p);}
@@ -197,6 +198,18 @@ public class MainActivity extends Activity {
                 switch(event.getAction()){
                     case android.view.DragEvent.ACTION_DRAG_STARTED:return event.getLocalState() instanceof String;
                     case android.view.DragEvent.ACTION_DRAG_ENTERED:view.setBackgroundColor(Color.rgb(255,248,190));return true;
+                    case android.view.DragEvent.ACTION_DRAG_LOCATION: {
+                        if(screenScroll!=null){
+                            int[] scrollLocation=new int[2];int[] rowLocation=new int[2];
+                            screenScroll.getLocationOnScreen(scrollLocation);view.getLocationOnScreen(rowLocation);
+                            int pointerY=rowLocation[1]+(int)event.getY();
+                            int topEdge=scrollLocation[1]+dp(72);
+                            int bottomEdge=scrollLocation[1]+screenScroll.getHeight()-dp(72);
+                            if(pointerY<topEdge)screenScroll.smoothScrollBy(0,-dp(14));
+                            else if(pointerY>bottomEdge)screenScroll.smoothScrollBy(0,dp(14));
+                        }
+                        return true;
+                    }
                     case android.view.DragEvent.ACTION_DRAG_EXITED:view.setBackgroundColor(Color.TRANSPARENT);return true;
                     case android.view.DragEvent.ACTION_DRAG_ENDED:view.setBackgroundColor(Color.TRANSPARENT);return true;
                     case android.view.DragEvent.ACTION_DROP:
