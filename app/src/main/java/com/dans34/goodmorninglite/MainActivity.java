@@ -546,7 +546,7 @@ public class MainActivity extends Activity {
         android.widget.ProgressBar progress=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(Math.max(1,list.size()));progress.setProgress(done);progress.setProgressTintList(android.content.res.ColorStateList.valueOf(YELLOW));root.addView(progress,new LinearLayout.LayoutParams(-1,dp(8)));
         primary("Back to Today",this::showHome);addButton("Run again",this::startNewRoutine);
     }
-    private String todayKey(long millis){return new java.text.SimpleDateFormat("yyyy-MM-dd",Locale.US).format(new java.util.Date(millis));}
+    private String todayKey(long millis){return new java.text.SimpleDateFormat("dd/MM/yyyy",Locale.UK).format(new java.util.Date(millis));}
     private JSONArray historyArray(){try{return new JSONArray(prefs.getString("routine_history","[]"));}catch(Exception e){return new JSONArray();}}
     private void saveRoutineSession(String period,int done,int total,long elapsed){
         String sessionId=prefs.getString("routine_session_saved_id","");
