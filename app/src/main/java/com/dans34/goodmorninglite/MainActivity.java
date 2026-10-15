@@ -5,10 +5,15 @@ import android.app.AlertDialog;
 import android.app.TimePickerDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.animation.ValueAnimator;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
@@ -50,6 +55,7 @@ public class MainActivity extends Activity {
     private Runnable ticker;
     private TextView countdownView;
     private Button pauseButton;
+    private boolean completionAnimationRunning=false;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -456,7 +462,7 @@ public class MainActivity extends Activity {
         int controlSize=dp(60);
         Button pause=button(timerRunning?"Ⅱ":"▶",()->toggleTimer());pause.setTextSize(24);pause.setTextColor(MUTED);pause.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));pause.setMinWidth(0);pause.setMinimumWidth(0);pause.setContentDescription(timerRunning?"Pause timer":"Resume timer");
         LinearLayout.LayoutParams pauseParams=new LinearLayout.LayoutParams(controlSize,controlSize);pauseParams.setMargins(dp(4),0,dp(4),0);controls.addView(pause,pauseParams);pauseButton=pause;
-        Button complete=button("✓",()->{prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();Toast.makeText(this,"Task completed!",Toast.LENGTH_SHORT).show();nextTask();});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
+        Button complete=button("✓",()->{if(completionAnimationRunning)return;completionAnimationRunning=true;prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();Toast.makeText(this,"Task completed!",Toast.LENGTH_SHORT).show();celebrateTask(timerFace,()->{completionAnimationRunning=false;nextTask();});});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
         LinearLayout.LayoutParams completeParams=new LinearLayout.LayoutParams(controlSize,controlSize);completeParams.setMargins(dp(4),0,dp(4),0);controls.addView(complete,completeParams);
         Button skip=button("⏭",()->{Toast.makeText(this,"Task skipped",Toast.LENGTH_SHORT).show();nextTask();});skip.setTextSize(23);skip.setTextColor(MUTED);skip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));skip.setMinWidth(0);skip.setMinimumWidth(0);skip.setContentDescription("Skip task");
         LinearLayout.LayoutParams skipParams=new LinearLayout.LayoutParams(controlSize,controlSize);skipParams.setMargins(dp(4),0,dp(4),0);controls.addView(skip,skipParams);
@@ -464,6 +470,76 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams endParams=new LinearLayout.LayoutParams(controlSize,controlSize);endParams.setMargins(dp(4),0,dp(4),0);controls.addView(end,endParams);
         if(timerRunning)runTicker();
     }
+
+    private void celebrateTask(View timerFace,Runnable onFinished){
+        timerRunning=false;if(ticker!=null)handler.removeCallbacks(ticker);
+        timerFace.animate().cancel();
+        timerFace.animate().scaleX(1.08f).scaleY(1.08f).setDuration(160)
+            .setInterpolator(new DecelerateInterpolator()).withEndAction(()->{
+                timerFace.animate().scaleX(1f).scaleY(1f).setDuration(180).start();
+            }).start();
+        android.graphics.drawable.GradientDrawable flash=new android.graphics.drawable.GradientDrawable();
+        flash.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        flash.setColor(YELLOW);timerFace.setBackground(flash);
+        timerFace.postDelayed(()->{
+            if(isFinishing()||isDestroyed())return;
+            android.graphics.drawable.GradientDrawable settled=new android.graphics.drawable.GradientDrawable();
+            settled.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            settled.setColor(Color.rgb(249,249,250));timerFace.setBackground(settled);
+        },260);
+        showConfetti(false, timerFace, onFinished);
+    }
+    private void postGrandCelebration(){root.postDelayed(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);},120);}
+    private void showConfetti(boolean grand,View origin,Runnable onFinished){
+        View decor=getWindow().getDecorView();
+        if(!(decor instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
+        ViewGroup host=(ViewGroup)decor;
+        ConfettiBurst burst=new ConfettiBurst();
+        int[] location=new int[2];
+        if(origin!=null){origin.getLocationOnScreen(location);burst.setBurstCenter(location[0]+origin.getWidth()/2f,location[1]+origin.getHeight()/2f);}
+        else burst.setBurstCenter(getResources().getDisplayMetrics().widthPixels/2f,getResources().getDisplayMetrics().heightPixels*0.38f);
+        host.addView(burst,new ViewGroup.LayoutParams(-1,-1));
+        long duration=grand?1150:620;
+        ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);animator.setDuration(duration);animator.setInterpolator(new DecelerateInterpolator());
+        animator.addUpdateListener(a->{burst.setProgress((Float)a.getAnimatedValue());});
+        animator.addListener(new android.animation.AnimatorListenerAdapter(){
+            @Override public void onAnimationEnd(android.animation.Animator animation){
+                host.removeView(burst);
+                if(onFinished!=null&&!isFinishing()&&!isDestroyed())onFinished.run();
+            }
+        });
+        animator.start();
+    }
+    private class ConfettiBurst extends View {
+        private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final int[] colors={Color.rgb(255,224,0),Color.rgb(255,119,145),Color.rgb(92,183,132),Color.rgb(104,164,235),Color.rgb(183,139,230),Color.rgb(255,255,255)};
+        private final float[] angles=new float[grandParticleCount()];
+        private final float[] speeds=new float[angles.length];
+        private final float[] sizes=new float[angles.length];
+        private final int[] particleColors=new int[angles.length];
+        private float centerX,centerY,progress;
+        ConfettiBurst(){super(MainActivity.this);setLayerType(View.LAYER_TYPE_HARDWARE,null);
+            java.util.Random random=new java.util.Random();
+            for(int i=0;i<angles.length;i++){angles[i]=(float)(random.nextDouble()*Math.PI*2);speeds[i]=dp(90+random.nextInt(190));sizes[i]=dp(3+random.nextInt(5));particleColors[i]=colors[random.nextInt(colors.length)];}
+        }
+        private int grandParticleCount(){return 64;}
+        void setBurstCenter(float x,float y){centerX=x;centerY=y;}
+        void setProgress(float p){progress=p;invalidate();}
+        @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);
+            float gravity=dp(150)*progress*progress;
+            for(int i=0;i<angles.length;i++){
+                float distance=speeds[i]*progress;
+                float x=centerX+(float)Math.cos(angles[i])*distance;
+                float y=centerY+(float)Math.sin(angles[i])*distance+gravity;
+                float alpha=progress<0.72f?1f:Math.max(0f,(1f-progress)/0.28f);
+                paint.setColor(particleColors[i]);paint.setAlpha((int)(255*alpha));
+                float size=sizes[i]*(1f-progress*0.25f);
+                if(i%3==0)canvas.drawRect(x-size,y-size*0.55f,x+size,y+size*0.55f,paint);
+                else canvas.drawCircle(x,y,size*0.65f,paint);
+            }
+        }
+    }
+
     private void toggleTimer(){ArrayList<Task> list=routineTasks();if(list.isEmpty())return;if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}else{if(remainingMs<=0)remainingMs=list.get(currentTask).seconds*1000L;deadlineMs=System.currentTimeMillis()+remainingMs;timerRunning=true;}persistTimer();showTimer();}
     private void runTicker(){ticker=new Runnable(){public void run(){if(!timerRunning||countdownView==null)return;remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());countdownView.setText(formatTime(remainingMs));if(remainingMs==0){timerRunning=false;persistTimer();Toast.makeText(MainActivity.this,"Time is up — complete the task or continue.",Toast.LENGTH_LONG).show();if(pauseButton!=null)pauseButton.setText("Resume");}else handler.postDelayed(this,250);}};handler.post(ticker);}
     private void nextTask(){stopTimer();ArrayList<Task> list=routineTasks();if(currentTask+1>=list.size()){routineFinished=true;prefs.edit().putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();showCompletion();return;}currentTask++;currentTaskId=list.get(currentTask).id;remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;persistTimer();showTimer();}
@@ -472,6 +548,7 @@ public class MainActivity extends Activity {
         int done=0,totalSeconds=0;for(Task task:list){if(prefs.getBoolean(doneKey(task),false)){done++;totalSeconds+=task.seconds;}}
         boolean allCompleted=!list.isEmpty()&&done==list.size();
         heading(allCompleted?"🎉 Routine complete!":"Routine finished",allCompleted?"Every task completed — brilliant work!":"You made time for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.");
+        if(allCompleted)postGrandCelebration();
         long started=prefs.getLong("routine_start_time",System.currentTimeMillis());long elapsed=Math.max(0,(System.currentTimeMillis()-started)/1000L);
         saveRoutineSession(activePeriod,done,list.size(),elapsed);
         root.addView(text(done+" of "+list.size()+" tasks completed",21,INK,true));
