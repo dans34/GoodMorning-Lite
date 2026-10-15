@@ -114,6 +114,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams manageParams=new LinearLayout.LayoutParams(dp(48),dp(48));manageParams.leftMargin=dp(8);
         header.addView(manage,manageParams);manage.setOnClickListener(v->showManageRoutines());root.addView(header);
         LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(22);header.setLayoutParams(headerGap);
+        TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);
         for(String p:new String[]{"Morning","Evening","Night"}){
             final String chosen=p;
             addButton((activePeriod.equals(p)?"✓  ":"")+periodEmoji(p)+"  "+p,()->{
@@ -122,13 +123,13 @@ public class MainActivity extends Activity {
                 showHome();
             });
         }
-        TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);
         TextView rt=text(activePeriod+" routine",23,INK,true);rt.setGravity(Gravity.START);root.addView(rt);
         ArrayList<Task> visible=routineTasks();
         for(int i=0;i<visible.size();i++){
             final int ix=i;Task t=visible.get(i);
             addButton((prefs.getBoolean(doneKey(i),false)?"✓  ":"")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->editTask(globalTaskIndex(ix)));
         }
+        root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
             currentTask=firstIncomplete();ArrayList<Task> list=routineTasks();
             if(list.isEmpty()){Toast.makeText(this,"Add a task to this routine first.",Toast.LENGTH_SHORT).show();return;}
