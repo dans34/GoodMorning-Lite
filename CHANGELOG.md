@@ -112,3 +112,10 @@
 - Kept the existing full-completion streak unchanged; partial sessions contribute to consistency without being treated as fully completed routines.
 - Added supportive wording: “Every fresh start counts.”
 - Build and Nokia C12 behaviour still need user verification.
+
+## 2026-10-15 — V1 Alpha baseline
+
+- Named the current working milestone **V1 Alpha**.
+- Set the Android app version name to `1.0-alpha` (version code remains 1).
+- Updated the README to describe the current feature set and the user-confirmed Nokia C12 test status.
+- This is an alpha baseline, not a claim that a fresh build or formal GitHub release has been verified.
