@@ -622,8 +622,17 @@ public class MainActivity extends Activity {
 
         JSONArray history=historyArray();
         java.util.HashSet<String> activeDates=new java.util.HashSet<>();
+        java.util.HashSet<String> progressDates=new java.util.HashSet<>();
         int sessions=0,fullSessions=0;
         long now=System.currentTimeMillis();
+        java.util.Calendar consistencyStart=java.util.Calendar.getInstance();
+        consistencyStart.setTimeInMillis(now);
+        consistencyStart.set(java.util.Calendar.HOUR_OF_DAY,0);
+        consistencyStart.set(java.util.Calendar.MINUTE,0);
+        consistencyStart.set(java.util.Calendar.SECOND,0);
+        consistencyStart.set(java.util.Calendar.MILLISECOND,0);
+        consistencyStart.add(java.util.Calendar.DAY_OF_YEAR,-6);
+        long consistencyStartMs=consistencyStart.getTimeInMillis();
         java.util.Calendar weekStart=java.util.Calendar.getInstance();
         weekStart.setTimeInMillis(now);
         weekStart.set(java.util.Calendar.HOUR_OF_DAY,0);
@@ -643,6 +652,9 @@ public class MainActivity extends Activity {
             String date=displayHistoryDate(o.optString("date",""));
             if(full){fullSessions++;activeDates.add(date);}
             long timestamp=o.optLong("timestamp",0L);
+            if(timestamp>=consistencyStartMs && timestamp<=now && o.optInt("done",0)>0){
+                progressDates.add(date);
+            }
             if(timestamp>=weekStartMs && timestamp<=now){
                 weekSessions++;
                 if(full){weekFull++;weekActiveDates.add(date);}
@@ -677,6 +689,14 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams streakInfoParams=new LinearLayout.LayoutParams(-1,-2);
         streakInfoParams.topMargin=dp(6);
         streakCard.addView(streakInfo,streakInfoParams);
+        TextView consistencyInfo=text("Progress on "+progressDates.size()+" of the last 7 days",16,INK,true);
+        LinearLayout.LayoutParams consistencyParams=new LinearLayout.LayoutParams(-1,-2);
+        consistencyParams.topMargin=dp(12);
+        streakCard.addView(consistencyInfo,consistencyParams);
+        TextView encouragement=text("Every fresh start counts.",13,INK,false);
+        LinearLayout.LayoutParams encouragementParams=new LinearLayout.LayoutParams(-1,-2);
+        encouragementParams.topMargin=dp(3);
+        streakCard.addView(encouragement,encouragementParams);
         LinearLayout.LayoutParams streakCardParams=new LinearLayout.LayoutParams(-1,-2);
         streakCardParams.bottomMargin=dp(14);
         root.addView(streakCard,streakCardParams);
