@@ -166,7 +166,18 @@ public class MainActivity extends Activity {
         for(int i=0;i<visible.size();i++){final int ix=globalTaskIndex(i);Task t=visible.get(i);addButton("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));}
         primary("+ Add task",this::showTaskLibrary);
         addButton("Restart routine progress",()->startNewRoutine());
+        Button credits=button("♥  Credits",this::showCredits);credits.setTextSize(16);credits.setTextColor(Color.rgb(190,55,85));credits.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));
+        LinearLayout.LayoutParams creditParams=new LinearLayout.LayoutParams(-1,dp(48));creditParams.setMargins(0,dp(12),0,dp(4));root.addView(credits,creditParams);
         addButton("‹ Back to home",this::showHome);
+    }
+    private void showCredits(){
+        startScreen();root.setGravity(Gravity.CENTER);
+        TextView heart=text("♥",64,Color.rgb(220,65,100),true);
+        LinearLayout.LayoutParams heartParams=new LinearLayout.LayoutParams(-1,dp(94));heartParams.bottomMargin=dp(18);root.addView(heart,heartParams);
+        TextView message=text("To my darling Ronni,\\n\\nThis is what happens when a nerd falls in love with a cute, kind and amazing farmers daughter\\n\\nwith oodies of love,\\n\\nYour Dan",21,INK,false);
+        message.setGravity(Gravity.CENTER);message.setLineSpacing(dp(5),1.0f);root.addView(message,new LinearLayout.LayoutParams(-1,-2));
+        root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(28)));
+        primary("♥  Back to Manage Routines",this::showManageRoutines);
     }
     private void returnToRoutinePage(){if(managePageOpen)showManageRoutines();else showHome();}
     private int firstIncomplete(){ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)if(!prefs.getBoolean(doneKey(list.get(i)),false))return i;return list.size();}
