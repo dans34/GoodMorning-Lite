@@ -363,7 +363,7 @@ public class MainActivity extends Activity {
         for(int d=0;d<7;d++){String date=todayKey(cal.getTimeInMillis());if(d>0)week.append("   ");week.append(new java.text.SimpleDateFormat("EEE",Locale.US).format(cal.getTime())).append(" ").append(activeDates.contains(date)?"✓":"·");cal.add(java.util.Calendar.DAY_OF_YEAR,1);}
         root.addView(text(week.toString(),15,INK,false),gap);
         TextView recent=text("RECENT SESSIONS",13,MUTED,true);recent.setGravity(Gravity.START);root.addView(recent);
-        int shown=0;for(int i=history.length()-1;i>=0&&shown<20;i--){JSONObject o=history.optJSONObject(i);if(o==null)continue;String label=o.optString("period","Routine")+" · "+o.optString("date","")+"\n"+o.optInt("done",0)+"/"+o.optInt("total",0)+" tasks · "+duration((int)o.optLong("elapsed",0))+(o.optBoolean("full",false)?" · Completed":" · Partial");addButton(label,()->{});shown++;}
+        int shown=0;for(int i=history.length()-1;i>=0&&shown<20;i--){JSONObject o=history.optJSONObject(i);if(o==null)continue;String label=o.optString("period","Routine")+" · "+o.optString("date","")+"\n"+o.optInt("done",0)+"/"+o.optInt("total",0)+" tasks · "+duration((int)o.optLong("elapsed",0))+(o.optBoolean("full",false)?" · Completed":" · Partial");TextView sessionRow=text(label,14,INK,false);sessionRow.setGravity(Gravity.START);sessionRow.setPadding(dp(10),dp(10),dp(10),dp(10));root.addView(sessionRow,new LinearLayout.LayoutParams(-1,-2));shown++;}
         if(shown==0)root.addView(text("Your completed routines will appear here.",15,MUTED,false));
         addButton("‹ Back to Today",this::showHome);
     }
