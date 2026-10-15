@@ -494,7 +494,7 @@ public class MainActivity extends Activity {
         View decor=getWindow().getDecorView();
         if(!(decor instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
         ViewGroup host=(ViewGroup)decor;
-        ConfettiBurst burst=new ConfettiBurst();
+        ConfettiBurst burst=new ConfettiBurst(grand);
         int[] location=new int[2];
         if(origin!=null){origin.getLocationOnScreen(location);burst.setBurstCenter(location[0]+origin.getWidth()/2f,location[1]+origin.getHeight()/2f);}
         else burst.setBurstCenter(getResources().getDisplayMetrics().widthPixels/2f,getResources().getDisplayMetrics().heightPixels*0.38f);
@@ -513,16 +513,17 @@ public class MainActivity extends Activity {
     private class ConfettiBurst extends View {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final int[] colors={Color.rgb(255,224,0),Color.rgb(255,119,145),Color.rgb(92,183,132),Color.rgb(104,164,235),Color.rgb(183,139,230),Color.rgb(255,255,255)};
-        private final float[] angles=new float[grandParticleCount()];
-        private final float[] speeds=new float[angles.length];
-        private final float[] sizes=new float[angles.length];
-        private final int[] particleColors=new int[angles.length];
+        private final float[] angles;
+        private final float[] speeds;
+        private final float[] sizes;
+        private final int[] particleColors;
         private float centerX,centerY,progress;
-        ConfettiBurst(){super(MainActivity.this);setLayerType(View.LAYER_TYPE_HARDWARE,null);
+        ConfettiBurst(boolean grand){super(MainActivity.this);setLayerType(View.LAYER_TYPE_HARDWARE,null);
+            int count=grand?112:54;
+            angles=new float[count];speeds=new float[count];sizes=new float[count];particleColors=new int[count];
             java.util.Random random=new java.util.Random();
-            for(int i=0;i<angles.length;i++){angles[i]=(float)(random.nextDouble()*Math.PI*2);speeds[i]=dp(90+random.nextInt(190));sizes[i]=dp(3+random.nextInt(5));particleColors[i]=colors[random.nextInt(colors.length)];}
+            for(int i=0;i<angles.length;i++){angles[i]=(float)(random.nextDouble()*Math.PI*2);speeds[i]=dp((grand?120:90)+random.nextInt(grand?240:190));sizes[i]=dp(3+random.nextInt(5));particleColors[i]=colors[random.nextInt(colors.length)];}
         }
-        private int grandParticleCount(){return 64;}
         void setBurstCenter(float x,float y){centerX=x;centerY=y;}
         void setProgress(float p){progress=p;invalidate();}
         @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);
