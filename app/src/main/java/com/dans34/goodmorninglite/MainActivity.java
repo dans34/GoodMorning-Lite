@@ -444,14 +444,14 @@ public class MainActivity extends Activity {
         final String[] chosenPeriod={old.period==null||old.period.isEmpty()?activePeriod:old.period};
         TextView routineLabel=text("ROUTINE",12,MUTED,true);routineLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams routineLabelParams=new LinearLayout.LayoutParams(-1,-2);routineLabelParams.topMargin=dp(10);form.addView(routineLabel,routineLabelParams);
-        Button routineButton=button(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0],()->{
+        final Button[] routineButtonLabel={null};
+        routineButtonLabel[0]=button(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0],()->{
             String[] periods={"Morning","Evening","Night"};
             new AlertDialog.Builder(this).setTitle("Move task to routine").setItems(periods,(dialog,which)->{
                 chosenPeriod[0]=periods[which];routineButtonLabel[0].setText(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0]);
             }).show();
         });
-        final Button[] routineButtonLabel={routineButton};
-        form.addView(routineButton);
+        form.addView(routineButtonLabel[0]);
         TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams notesLabelParams=new LinearLayout.LayoutParams(-1,-2);notesLabelParams.topMargin=dp(10);form.addView(notesLabel,notesLabelParams);
         EditText notes=new EditText(this);notes.setHint("Add a helpful reminder");notes.setMinLines(2);notes.setGravity(Gravity.TOP|Gravity.START);notes.setText(old.notes);form.addView(notes,new LinearLayout.LayoutParams(-1,dp(82)));
