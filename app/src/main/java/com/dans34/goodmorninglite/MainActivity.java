@@ -477,9 +477,9 @@ public class MainActivity extends Activity {
         addButton("‹ Back to task library",this::showTaskLibrary);
     }
     private void previewRoutineTemplate(RoutineTemplate template){
-        StringBuilder details=new StringBuilder(template.description).append("\\n\\n");
-        for(LibraryTask item:template.items)details.append(item.emoji).append("  ").append(item.name).append(" — ").append(item.minutes).append(" min\\n").append("    ").append(item.description).append("\\n");
-        details.append("\\nTotal: ").append(template.totalMinutes()).append(" minutes");
+        StringBuilder details=new StringBuilder(template.description).append("\n\n");
+        for(LibraryTask item:template.items)details.append(item.emoji).append("  ").append(item.name).append(" — ").append(item.minutes).append(" min\n").append("    ").append(item.description).append("\n");
+        details.append("\nTotal: ").append(template.totalMinutes()).append(" minutes");
         new AlertDialog.Builder(this).setTitle(template.emoji+"  "+template.name).setMessage(details.toString())
             .setNegativeButton("Back",null)
             .setPositiveButton("Add to "+activePeriod,(dialog,which)->addRoutineTemplate(template))
