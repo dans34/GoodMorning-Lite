@@ -126,3 +126,8 @@
 - The build details dialog shows the app version, build date, full Git commit hash, working-tree cleanliness, and a GitHub commit link; it also allows copying the full hash.
 - Gradle injects Git metadata at build time and records whether uncommitted changes were present. Unknown metadata is identified rather than assumed clean.
 - Not yet built or verified in Android Studio or on the Nokia C12.
+
+## 2026-10-15 — UK build date format
+
+- Changed the build identity timestamp to UK day/month/year format (`dd/MM/yyyy HH:mm:ss`) to match the app's established date display convention.
+- Not yet rebuilt or verified on the Nokia C12.
