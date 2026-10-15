@@ -190,6 +190,7 @@ public class MainActivity extends Activity {
         TextView sub=text("Choose an idea for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.",15,MUTED,false);sub.setGravity(Gravity.START);
         LinearLayout.LayoutParams subp=new LinearLayout.LayoutParams(-1,-2);subp.topMargin=dp(6);subp.bottomMargin=dp(12);root.addView(sub,subp);
         HorizontalScrollView tabsScroll=new HorizontalScrollView(this);tabsScroll.setHorizontalScrollBarEnabled(false);
+        tabsScroll.setFillViewport(false);
         LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(0);
         for(String cat:new String[]{"Everyday","Home","Errands","People","Movement","Focus","Unwind"}){
             final String chosen=cat;Button tab=button((libraryCategory.equals(cat)?"●  ":"")+cat,()->{libraryCategory=chosen;showTaskLibrary();});
@@ -199,6 +200,16 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-2,dp(42));tp.setMargins(0,0,dp(7),0);tabs.addView(tab,tp);
         }
         tabsScroll.addView(tabs);root.addView(tabsScroll);
+        tabsScroll.post(()->{
+            int selectedIndex=0;
+            String[] categories={"Everyday","Home","Errands","People","Movement","Focus","Unwind"};
+            for(int i=0;i<categories.length;i++)if(categories[i].equals(libraryCategory)){selectedIndex=i;break;}
+            View selectedTab=tabs.getChildAt(selectedIndex);
+            if(selectedTab!=null){
+                int target=selectedTab.getLeft()-Math.max(0,(tabsScroll.getWidth()-selectedTab.getWidth())/2);
+                tabsScroll.scrollTo(Math.max(0,target),0);
+            }
+        });
         ScrollView listScroll=new ScrollView(this);LinearLayout list=new LinearLayout(this);list.setOrientation(1);
         for(LibraryTask item:libraryTasks)if(item.category.equals(libraryCategory)){
             LinearLayout row=new LinearLayout(this);row.setOrientation(0);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(10),0,dp(10));
