@@ -430,7 +430,32 @@ public class MainActivity extends Activity {
             returnToRoutinePage();
         }).show();
     }
-    private void editTask(int index){boolean add=index<0;Task old=add?new Task("",DEFAULT_SECONDS,""):tasks.get(index);LinearLayout form=new LinearLayout(this);form.setPadding(dp(20),dp(8),dp(20),0);form.setOrientation(1);EditText name=new EditText(this);name.setHint("Task name");name.setText(old.name);form.addView(name);EditText minutes=new EditText(this);minutes.setHint("Duration in minutes");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes);EditText notes=new EditText(this);notes.setHint("Notes (optional)");notes.setText(old.notes);form.addView(notes);new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{String n=name.getText().toString().trim();if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}int mins;try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=2;}mins=Math.max(1,Math.min(240,mins));Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),activePeriod):new Task(old.id,n,mins*60,notes.getText().toString().trim(),old.period);if(add)tasks.add(t);else tasks.set(index,t);saveTasks();returnToRoutinePage();}).show();}
+    private void editTask(int index){
+        boolean add=index<0;
+        Task old=add?new Task("",DEFAULT_SECONDS,"",activePeriod):tasks.get(index);
+        LinearLayout form=new LinearLayout(this);form.setPadding(dp(20),dp(8),dp(20),0);form.setOrientation(1);
+        EditText name=new EditText(this);name.setHint("Task name");name.setSingleLine(true);name.setText(old.name);form.addView(name);
+        EditText minutes=new EditText(this);minutes.setHint("Duration in minutes");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes);
+        EditText notes=new EditText(this);notes.setHint("Notes (optional)");notes.setMinLines(2);notes.setText(old.notes);form.addView(notes);
+        final String[] chosenEmoji={old.emoji==null||old.emoji.isEmpty()?emojiForTaskName(old.name):old.emoji};
+        Button emojiButton=button(chosenEmoji[0]+"  Choose task icon",()->{
+            String[] emojis={"✨","💧","🛏️","🌤️","🛒","📦","💳","🍽️","🧺","♻️","🧹","🗓️","📞","📝","🧘","🚶","🏃","📚","🌙","❤️","⭐","☕","🍎","🎯"};
+            new AlertDialog.Builder(this).setTitle("Choose task icon").setItems(emojis,(dialog,which)->{
+                chosenEmoji[0]=emojis[which];emojiButton.setText(chosenEmoji[0]+"  Choose task icon");
+            }).show();
+        });
+        form.addView(emojiButton);
+        new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
+            String n=name.getText().toString().trim();
+            if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
+            int mins;try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=2;}
+            mins=Math.max(1,Math.min(240,mins));
+            Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),activePeriod):new Task(old.id,n,mins*60,notes.getText().toString().trim(),old.period);
+            t.emoji=chosenEmoji[0];
+            if(add)tasks.add(t);else tasks.set(index,t);
+            saveTasks();returnToRoutinePage();
+        }).show();
+    }
     private void showTimer(){
         if(ticker!=null)handler.removeCallbacks(ticker);
         ArrayList<Task> list=routineTasks();if(list.isEmpty()){showHome();return;}
