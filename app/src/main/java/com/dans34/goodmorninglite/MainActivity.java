@@ -165,10 +165,10 @@ public class MainActivity extends Activity {
             android.graphics.drawable.GradientDrawable cardBackground=new android.graphics.drawable.GradientDrawable();
             cardBackground.setColor(Color.rgb(245,245,248));cardBackground.setCornerRadius(dp(12));
             taskCard.setBackground(cardBackground);taskCard.setClickable(true);taskCard.setFocusable(true);
-            android.util.TypedValue outValue=new android.util.TypedValue();
-            getTheme().resolveAttribute(android.R.attr.selectableItemBackground,outValue,true);
-            android.graphics.drawable.Drawable ripple=android.graphics.drawable.Drawable.createFromXml(getResources(),getResources().getXml(outValue.resourceId));
-            if(android.os.Build.VERSION.SDK_INT>=23)taskCard.setForeground(ripple);
+            if(android.os.Build.VERSION.SDK_INT>=21){
+                taskCard.setBackground(new android.graphics.drawable.RippleDrawable(
+                    android.content.res.ColorStateList.valueOf(Color.rgb(225,225,232)),cardBackground,null));
+            }
             taskCard.setOnClickListener(v->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
             TextView number=text(String.valueOf(i+1),12,MUTED,true);
             taskCard.addView(number,new LinearLayout.LayoutParams(dp(22),-2));
