@@ -413,31 +413,31 @@ public class MainActivity extends Activity {
         LinearLayout timerFace=new LinearLayout(this);timerFace.setOrientation(1);timerFace.setGravity(Gravity.CENTER);
         android.graphics.drawable.GradientDrawable faceBackground=new android.graphics.drawable.GradientDrawable();
         faceBackground.setShape(android.graphics.drawable.GradientDrawable.OVAL);faceBackground.setColor(Color.rgb(249,249,250));timerFace.setBackground(faceBackground);
-        LinearLayout.LayoutParams faceParams=new LinearLayout.LayoutParams(dp(300),dp(300));faceParams.gravity=Gravity.CENTER_HORIZONTAL;faceParams.setMargins(0,dp(4),0,dp(10));root.addView(timerFace,faceParams);
-        TextView timerState=text(timerRunning?"●":"Ⅱ",18,INK,true);
-        android.graphics.drawable.GradientDrawable stateBackground=new android.graphics.drawable.GradientDrawable();stateBackground.setColor(YELLOW);stateBackground.setCornerRadius(dp(24));timerState.setBackground(stateBackground);
-        timerState.setGravity(Gravity.CENTER);timerState.setPadding(dp(15),dp(5),dp(15),dp(5));
-        timerFace.addView(timerState,new LinearLayout.LayoutParams(dp(54),dp(32)));
+        LinearLayout.LayoutParams faceParams=new LinearLayout.LayoutParams(dp(300),dp(300));faceParams.gravity=Gravity.CENTER_HORIZONTAL;faceParams.setMargins(0,dp(4),0,dp(8));root.addView(timerFace,faceParams);
         TextView taskIcon=text(periodEmoji(activePeriod),44,INK,false);
-        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(-1,dp(76));iconParams.topMargin=dp(12);timerFace.addView(taskIcon,iconParams);
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(-1,dp(76));iconParams.topMargin=dp(18);timerFace.addView(taskIcon,iconParams);
         countdownView=text(formatTime(remainingMs),54,INK,true);
-        LinearLayout.LayoutParams countdownParams=new LinearLayout.LayoutParams(-1,dp(78));countdownParams.topMargin=dp(2);timerFace.addView(countdownView,countdownParams);
+        LinearLayout.LayoutParams countdownParams=new LinearLayout.LayoutParams(-1,dp(78));countdownParams.topMargin=dp(4);timerFace.addView(countdownView,countdownParams);
         TextView planned=text(duration(list.get(currentTask).seconds)+" planned",14,MUTED,false);
-        LinearLayout.LayoutParams plannedParams=new LinearLayout.LayoutParams(-1,dp(30));plannedParams.topMargin=dp(0);timerFace.addView(planned,plannedParams);
+        timerFace.addView(planned,new LinearLayout.LayoutParams(-1,dp(30)));
+
         if(!list.get(currentTask).notes.isEmpty()){
-            TextView note=text(list.get(currentTask).notes,14,MUTED,false);note.setMaxLines(2);
-            LinearLayout.LayoutParams noteParams=new LinearLayout.LayoutParams(-1,-2);noteParams.setMargins(0,dp(8),0,0);timerFace.addView(note,noteParams);
+            TextView note=text(list.get(currentTask).notes,15,MUTED,false);note.setMaxLines(3);note.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams noteParams=new LinearLayout.LayoutParams(-1,-2);noteParams.setMargins(dp(4),dp(4),dp(4),dp(14));root.addView(note,noteParams);
+        }else{
+            root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(14)));
         }
 
-        LinearLayout controls=new LinearLayout(this);controls.setOrientation(0);controls.setGravity(Gravity.CENTER);LinearLayout.LayoutParams controlsParams=new LinearLayout.LayoutParams(-1,dp(88));controlsParams.setMargins(0,dp(6),0,dp(8));root.addView(controls,controlsParams);
-        Button pause=button(timerRunning?"Ⅱ":"▶",()->toggleTimer());pause.setTextSize(25);pause.setTextColor(MUTED);pause.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));pause.setMinWidth(0);pause.setMinimumWidth(0);pause.setContentDescription(timerRunning?"Pause timer":"Resume timer");
-        controls.addView(pause,new LinearLayout.LayoutParams(0,dp(60),1));pauseButton=pause;
-        Button complete=button("✓",()->{prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();nextTask();});complete.setTextSize(34);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
-        LinearLayout.LayoutParams completeParams=new LinearLayout.LayoutParams(dp(72),dp(72));completeParams.setMargins(dp(5),0,dp(5),0);controls.addView(complete,completeParams);
-        Button skip=button("›|",this::nextTask);skip.setTextSize(24);skip.setTextColor(MUTED);skip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));skip.setMinWidth(0);skip.setMinimumWidth(0);skip.setContentDescription("Skip task");
-        controls.addView(skip,new LinearLayout.LayoutParams(0,dp(60),1));
-        Button end=button("■",()->{stopTimer();prefs.edit().putBoolean("timer_screen_active",false).apply();showHome();});end.setTextSize(20);end.setTextColor(Color.rgb(190,55,85));end.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));end.setMinWidth(0);end.setMinimumWidth(0);end.setContentDescription("End routine");
-        LinearLayout.LayoutParams endParams=new LinearLayout.LayoutParams(0,dp(60),1);endParams.leftMargin=dp(5);controls.addView(end,endParams);
+        LinearLayout controls=new LinearLayout(this);controls.setOrientation(0);controls.setGravity(Gravity.CENTER);LinearLayout.LayoutParams controlsParams=new LinearLayout.LayoutParams(-1,dp(72));controlsParams.setMargins(0,dp(4),0,dp(8));root.addView(controls,controlsParams);
+        int controlSize=dp(60);
+        Button pause=button(timerRunning?"Ⅱ":"▶",()->toggleTimer());pause.setTextSize(24);pause.setTextColor(MUTED);pause.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));pause.setMinWidth(0);pause.setMinimumWidth(0);pause.setContentDescription(timerRunning?"Pause timer":"Resume timer");
+        LinearLayout.LayoutParams pauseParams=new LinearLayout.LayoutParams(controlSize,controlSize);pauseParams.setMargins(dp(4),0,dp(4),0);controls.addView(pause,pauseParams);pauseButton=pause;
+        Button complete=button("✓",()->{prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();nextTask();});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
+        LinearLayout.LayoutParams completeParams=new LinearLayout.LayoutParams(controlSize,controlSize);completeParams.setMargins(dp(4),0,dp(4),0);controls.addView(complete,completeParams);
+        Button skip=button("⏭",this::nextTask);skip.setTextSize(23);skip.setTextColor(MUTED);skip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));skip.setMinWidth(0);skip.setMinimumWidth(0);skip.setContentDescription("Skip task");
+        LinearLayout.LayoutParams skipParams=new LinearLayout.LayoutParams(controlSize,controlSize);skipParams.setMargins(dp(4),0,dp(4),0);controls.addView(skip,skipParams);
+        Button end=button("■",()->new AlertDialog.Builder(this).setTitle("End routine?").setMessage("Are you sure you want to end this routine? Your completed tasks will be kept.").setNegativeButton("Keep going",null).setPositiveButton("End routine",(dialog,which)->{stopTimer();prefs.edit().putBoolean("timer_screen_active",false).apply();showHome();}).show());end.setTextSize(20);end.setTextColor(Color.rgb(190,55,85));end.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));end.setMinWidth(0);end.setMinimumWidth(0);end.setContentDescription("End routine");
+        LinearLayout.LayoutParams endParams=new LinearLayout.LayoutParams(controlSize,controlSize);endParams.setMargins(dp(4),0,dp(4),0);controls.addView(end,endParams);
         if(timerRunning)runTicker();
     }
     private void toggleTimer(){ArrayList<Task> list=routineTasks();if(list.isEmpty())return;if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}else{if(remainingMs<=0)remainingMs=list.get(currentTask).seconds*1000L;deadlineMs=System.currentTimeMillis()+remainingMs;timerRunning=true;}persistTimer();showTimer();}
