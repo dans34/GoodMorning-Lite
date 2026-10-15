@@ -49,28 +49,11 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 4096 -cores 2
           script: |
-            set -eu
             mkdir -p screenshots
-
-            # Always capture whatever diagnostics are available, even if install or launch fails.
-            collect_diagnostics() {
-              adb devices -l > screenshots/adb-devices.txt 2>&1 || true
-              adb shell getprop sys.boot_completed > screenshots/boot-state-final.txt 2>&1 || true
-              adb logcat -b all -d > screenshots/android-logcat-full.txt 2>&1 || true
-              adb shell dumpsys activity processes > screenshots/activity-processes.txt 2>&1 || true
-              adb shell dumpsys meminfo > screenshots/memory-dump.txt 2>&1 || true
-              adb shell dumpsys activity lastanr > screenshots/last-anr.txt 2>&1 || true
-              adb shell dumpsys window windows > screenshots/window-dump.txt 2>&1 || true
-              adb shell uiautomator dump /sdcard/window.xml > screenshots/uiautomator-output.txt 2>&1 || true
-              adb pull /sdcard/window.xml screenshots/window.xml > screenshots/adb-pull-output.txt 2>&1 || true
-              adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png 2> screenshots/screencap-error.txt || true
-            }
-            trap collect_diagnostics EXIT
-
             adb wait-for-device
-            adb devices -l | tee screenshots/adb-devices.txt
+            adb devices -l > screenshots/adb-devices.txt 2>&1 || true
 
-            # Wait up to 120 seconds for Android to report a completed boot.
+            # Poll boot state; do not stop before diagnostics can be collected.
             boot_state=""
             for attempt in $(seq 1 24); do
               boot_state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\\r' || true)"
@@ -79,31 +62,45 @@ jobs:
               fi
               sleep 5
             done
-            printf 'sys.boot_completed=%s\n' "$boot_state" | tee screenshots/boot-state.txt
-            test "$boot_state" = "1"
+            printf 'sys.boot_completed=%s\n' "$boot_state" > screenshots/boot-state.txt
 
             adb shell input keyevent 82 || true
             adb shell settings put global window_animation_scale 0 || true
             adb shell settings put global transition_animation_scale 0 || true
             adb shell settings put global animator_duration_scale 0 || true
 
-            # Install first: pm clear fails on a fresh emulator when the package is absent.
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb shell pm clear com.dans34.goodmorninglite || true
-            adb shell am force-stop com.dans34.goodmorninglite
-            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity > screenshots/launch-output.txt 2>&1
+            # Install before clearing data. Keep going after failures so diagnostics survive.
+            adb install -r app/build/outputs/apk/debug/app-debug.apk > screenshots/install-output.txt 2>&1 || echo "FAIL: APK installation failed." > screenshots/smoke-test-result.txt
+            adb shell pm clear com.dans34.goodmorninglite > screenshots/pm-clear-output.txt 2>&1 || true
+            adb shell am force-stop com.dans34.goodmorninglite > screenshots/force-stop-output.txt 2>&1 || true
+            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity > screenshots/launch-output.txt 2>&1 || echo "FAIL: Activity launch failed." > screenshots/smoke-test-result.txt
             sleep 5
 
-            # Capture the UI and logs before checking the expected first screen.
+            # Best-effort diagnostics run even when install or launch fails.
             adb shell uiautomator dump /sdcard/window.xml > screenshots/uiautomator-output.txt 2>&1 || true
             adb pull /sdcard/window.xml screenshots/window.xml > screenshots/adb-pull-output.txt 2>&1 || true
-            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png || true
+            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png 2> screenshots/screencap-error.txt || true
             adb logcat -b all -d > screenshots/android-logcat-full.txt 2>&1 || true
+            adb shell dumpsys activity processes > screenshots/activity-processes.txt 2>&1 || true
+            adb shell dumpsys meminfo > screenshots/memory-dump.txt 2>&1 || true
+            adb shell dumpsys activity lastanr > screenshots/last-anr.txt 2>&1 || true
+            adb shell dumpsys window windows > screenshots/window-dump.txt 2>&1 || true
+            adb shell getprop sys.boot_completed > screenshots/boot-state-final.txt 2>&1 || true
 
-            grep -qE 'Which routine should we build first\\?|GoodMorning' screenshots/window.xml
-            ! grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\\.dans34\\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt
-            test -s screenshots/goodmorning-lite-first-launch.png
-            echo "PASS: app launched and expected first screen is visible." > screenshots/smoke-test-result.txt
+            if [ "$boot_state" != "1" ]; then
+              echo "FAIL: Android boot flag was not 1." > screenshots/smoke-test-result.txt
+            elif ! grep -qE 'Which routine should we build first\\?|GoodMorning' screenshots/window.xml 2>/dev/null; then
+              echo "FAIL: Expected onboarding/home UI was not found." > screenshots/smoke-test-result.txt
+            elif grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\\.dans34\\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt 2>/dev/null; then
+              echo "FAIL: ANR dialog or app fatal exception detected." > screenshots/smoke-test-result.txt
+            elif [ ! -s screenshots/goodmorning-lite-first-launch.png ]; then
+              echo "FAIL: Screenshot was not captured." > screenshots/smoke-test-result.txt
+            else
+              echo "PASS: app launched and expected first screen is visible." > screenshots/smoke-test-result.txt
+            fi
+
+            cat screenshots/smoke-test-result.txt
+            grep -q '^PASS:' screenshots/smoke-test-result.txt
 
       - name: Upload emulator diagnostics and screenshot
         if: always()
