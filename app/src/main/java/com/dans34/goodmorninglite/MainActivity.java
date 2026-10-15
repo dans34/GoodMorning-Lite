@@ -146,6 +146,7 @@ public class MainActivity extends Activity {
             Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
             addButton((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
         }
+        addButton("📅  History & streaks",this::showHistory);
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
             currentTask=firstIncomplete();ArrayList<Task> list=routineTasks();
@@ -326,11 +327,45 @@ public class MainActivity extends Activity {
         stopTimer();startScreen();ArrayList<Task> list=routineTasks();heading("You're all done!","You made time for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.");
         int done=0,totalSeconds=0;for(Task task:list){if(prefs.getBoolean(doneKey(task),false)){done++;totalSeconds+=task.seconds;}}
         long started=prefs.getLong("routine_start_time",System.currentTimeMillis());long elapsed=Math.max(0,(System.currentTimeMillis()-started)/1000L);
+        saveRoutineSession(activePeriod,done,list.size(),elapsed);
         root.addView(text(done+" of "+list.size()+" tasks completed",21,INK,true));
         TextView stats=text("Planned time completed: "+duration(totalSeconds)+"\nTime in this session: "+duration((int)elapsed),15,MUTED,false);
         stats.setGravity(Gravity.CENTER);LinearLayout.LayoutParams statp=new LinearLayout.LayoutParams(-1,-2);statp.setMargins(0,dp(16),0,dp(22));root.addView(stats,statp);
         android.widget.ProgressBar progress=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(Math.max(1,list.size()));progress.setProgress(done);progress.setProgressTintList(android.content.res.ColorStateList.valueOf(YELLOW));root.addView(progress,new LinearLayout.LayoutParams(-1,dp(8)));
         primary("Back to Today",this::showHome);addButton("Run again",this::startNewRoutine);
+    }
+    private String todayKey(long millis){return new java.text.SimpleDateFormat("yyyy-MM-dd",Locale.US).format(new java.util.Date(millis));}
+    private JSONArray historyArray(){try{return new JSONArray(prefs.getString("routine_history","[]"));}catch(Exception e){return new JSONArray();}}
+    private void saveRoutineSession(String period,int done,int total,long elapsed){
+        String sessionId=prefs.getString("routine_session_saved_id","");
+        String currentId=period+"_"+prefs.getLong("routine_start_time",0L);
+        if(currentId.equals(sessionId))return;
+        JSONObject item=new JSONObject();try{item.put("date",todayKey(System.currentTimeMillis()));item.put("period",period);item.put("done",done);item.put("total",total);item.put("elapsed",elapsed);item.put("full",total>0&&done==total);item.put("timestamp",System.currentTimeMillis());}catch(Exception ignored){}
+        JSONArray history=historyArray();history.put(item);
+        while(history.length()>500){JSONArray trimmed=new JSONArray();for(int i=history.length()-500;i<history.length();i++)trimmed.put(history.opt(i));history=trimmed;}
+        prefs.edit().putString("routine_history",history.toString()).putString("routine_session_saved_id",currentId).apply();
+    }
+    private void showHistory(){
+        startScreen();heading("History & streaks","Celebrate the routines you complete.");
+        JSONArray history=historyArray();java.util.HashSet<String> activeDates=new java.util.HashSet<>();int sessions=0,fullSessions=0;
+        long now=System.currentTimeMillis();String today=todayKey(now);
+        for(int i=0;i<history.length();i++){JSONObject o=history.optJSONObject(i);if(o==null)continue;sessions++;if(o.optBoolean("full",false)){fullSessions++;activeDates.add(o.optString("date",""));}}
+        int streak=0;java.util.Calendar day=java.util.Calendar.getInstance();day.setTimeInMillis(now);
+        if(!activeDates.contains(today))day.add(java.util.Calendar.DAY_OF_YEAR,-1);
+        while(activeDates.contains(todayKey(day.getTimeInMillis()))&&streak<3660){streak++;day.add(java.util.Calendar.DAY_OF_YEAR,-1);}
+        root.addView(text(String.valueOf(streak),42,INK,true));
+        root.addView(text("day streak",16,MUTED,false));
+        LinearLayout.LayoutParams gap=new LinearLayout.LayoutParams(-1,-2);gap.topMargin=dp(12);gap.bottomMargin=dp(12);
+        root.addView(text(fullSessions+" completed routines  ·  "+sessions+" sessions recorded",15,INK,false),gap);
+        TextView weekly=text("THIS WEEK",13,MUTED,true);weekly.setGravity(Gravity.START);root.addView(weekly);
+        java.util.Calendar cal=java.util.Calendar.getInstance();cal.set(java.util.Calendar.DAY_OF_WEEK,cal.getFirstDayOfWeek());
+        StringBuilder week=new StringBuilder();
+        for(int d=0;d<7;d++){String date=todayKey(cal.getTimeInMillis());if(d>0)week.append("   ");week.append(new java.text.SimpleDateFormat("EEE",Locale.US).format(cal.getTime())).append(" ").append(activeDates.contains(date)?"✓":"·");cal.add(java.util.Calendar.DAY_OF_YEAR,1);}
+        root.addView(text(week.toString(),15,INK,false),gap);
+        TextView recent=text("RECENT SESSIONS",13,MUTED,true);recent.setGravity(Gravity.START);root.addView(recent);
+        int shown=0;for(int i=history.length()-1;i>=0&&shown<20;i--){JSONObject o=history.optJSONObject(i);if(o==null)continue;String label=o.optString("period","Routine")+" · "+o.optString("date","")+"\n"+o.optInt("done",0)+"/"+o.optInt("total",0)+" tasks · "+duration((int)o.optLong("elapsed",0))+(o.optBoolean("full",false)?" · Completed":" · Partial");addButton(label,()->{});shown++;}
+        if(shown==0)root.addView(text("Your completed routines will appear here.",15,MUTED,false));
+        addButton("‹ Back to Today",this::showHome);
     }
     private void startNewRoutine(){stopTimer();ArrayList<Task> list=routineTasks();SharedPreferences.Editor editor=prefs.edit();for(Task task:list)editor.remove(doneKey(task));currentTask=0;currentTaskId=list.isEmpty()?"":list.get(0).id;remainingMs=list.isEmpty()?DEFAULT_SECONDS*1000L:list.get(0).seconds*1000L;routineFinished=false;editor.putBoolean("routine_finished",false).putBoolean("timer_screen_active",false).putInt("timer_task_index",0).putString("timer_task_id",currentTaskId).putLong("timer_remaining_ms",remainingMs).apply();showHome();}
     private void stopTimer(){timerRunning=false;if(ticker!=null)handler.removeCallbacks(ticker);ticker=null;}
