@@ -129,7 +129,9 @@ public class MainActivity extends Activity {
         manage.setContentDescription("Manage routines");manage.setPadding(0,0,0,dp(2));manage.setMinWidth(0);manage.setMinimumWidth(0);manage.setMinHeight(0);manage.setMinimumHeight(0);
         manage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
         LinearLayout.LayoutParams manageParams=new LinearLayout.LayoutParams(dp(48),dp(48));manageParams.leftMargin=dp(8);
-        header.addView(manage,manageParams);manage.setOnClickListener(v->showManageRoutines());root.addView(header);
+        header.addView(manage,manageParams);manage.setOnClickListener(v->showManageRoutines());
+        Button history=new Button(this);history.setText("📅");history.setTextSize(20);history.setAllCaps(false);history.setTextColor(INK);history.setContentDescription("History and streaks");history.setPadding(0,0,0,dp(2));history.setMinWidth(0);history.setMinimumWidth(0);history.setMinHeight(0);history.setMinimumHeight(0);history.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
+        LinearLayout.LayoutParams historyParams=new LinearLayout.LayoutParams(dp(48),dp(48));historyParams.leftMargin=dp(8);header.addView(history,historyParams);history.setOnClickListener(v->showHistory());root.addView(header);
         LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(22);header.setLayoutParams(headerGap);
         TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);
         LinearLayout periodRow=new LinearLayout(this);periodRow.setOrientation(0);periodRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -156,7 +158,6 @@ public class MainActivity extends Activity {
             Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
             addButton((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
         }
-        addButton("📅  History & streaks",this::showHistory);
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
             currentTask=firstIncomplete();ArrayList<Task> list=routineTasks();
