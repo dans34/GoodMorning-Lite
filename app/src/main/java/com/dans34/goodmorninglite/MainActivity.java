@@ -238,10 +238,14 @@ public class MainActivity extends Activity {
         ArrayList<Task> visible=routineTasks();
         int totalSeconds=0;
         for(Task task:visible)totalSeconds+=task.seconds;
-        TextView routineSummary=text(visible.size()+" "+(visible.size()==1?"task":"tasks")+"  ·  "+duration(totalSeconds)+" estimated",14,MUTED,false);
-        routineSummary.setGravity(Gravity.START);
+        TextView routineSummary=text(visible.size()+" "+(visible.size()==1?"task":"tasks")+"  ·  "+duration(totalSeconds)+" estimated total",14,INK,true);
+        routineSummary.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+        routineSummary.setPadding(dp(12),dp(8),dp(12),dp(8));
+        android.graphics.drawable.GradientDrawable summaryBackground=new android.graphics.drawable.GradientDrawable();
+        summaryBackground.setColor(Color.rgb(255,248,210));summaryBackground.setCornerRadius(dp(12));
+        routineSummary.setBackground(summaryBackground);
         LinearLayout.LayoutParams summaryParams=new LinearLayout.LayoutParams(-1,-2);
-        summaryParams.setMargins(0,0,0,dp(8));
+        summaryParams.setMargins(0,dp(2),0,dp(10));
         root.addView(routineSummary,summaryParams);
         if(visible.isEmpty())addButton("No tasks yet — browse the library",this::showTaskLibrary);
         for(int i=0;i<visible.size();i++){
@@ -437,6 +441,17 @@ public class MainActivity extends Activity {
         TextView minutesUnit=text("minutes",15,MUTED,false);minutesUnit.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams minutesUnitParams=new LinearLayout.LayoutParams(-2,-1);minutesUnitParams.leftMargin=dp(8);durationPickerRow.addView(minutesUnit,minutesUnitParams);
         form.addView(durationPickerRow);
+        final String[] chosenPeriod={old.period==null||old.period.isEmpty()?activePeriod:old.period};
+        TextView routineLabel=text("ROUTINE",12,MUTED,true);routineLabel.setGravity(Gravity.START);
+        LinearLayout.LayoutParams routineLabelParams=new LinearLayout.LayoutParams(-1,-2);routineLabelParams.topMargin=dp(10);form.addView(routineLabel,routineLabelParams);
+        Button routineButton=button(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0],()->{
+            String[] periods={"Morning","Evening","Night"};
+            new AlertDialog.Builder(this).setTitle("Move task to routine").setItems(periods,(dialog,which)->{
+                chosenPeriod[0]=periods[which];routineButtonLabel[0].setText(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0]);
+            }).show();
+        });
+        final Button[] routineButtonLabel={routineButton};
+        form.addView(routineButton);
         TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams notesLabelParams=new LinearLayout.LayoutParams(-1,-2);notesLabelParams.topMargin=dp(10);form.addView(notesLabel,notesLabelParams);
         EditText notes=new EditText(this);notes.setHint("Add a helpful reminder");notes.setMinLines(2);notes.setGravity(Gravity.TOP|Gravity.START);notes.setText(old.notes);form.addView(notes,new LinearLayout.LayoutParams(-1,dp(82)));
@@ -462,7 +477,7 @@ public class MainActivity extends Activity {
             String n=name.getText().toString().trim();
             if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
             int mins=Math.max(1,Math.min(240,minutes.getValue()));
-            Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),activePeriod):new Task(old.id,n,mins*60,notes.getText().toString().trim(),old.period);
+            Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),chosenPeriod[0]):new Task(old.id,n,mins*60,notes.getText().toString().trim(),chosenPeriod[0]);
             t.emoji=chosenEmoji[0];
             if(add)tasks.add(t);else tasks.set(index,t);
             saveTasks();returnToRoutinePage();
