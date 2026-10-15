@@ -690,7 +690,7 @@ public class MainActivity extends Activity {
             boolean full=o.optBoolean("full",false);
             String period=o.optString("period","Routine");
             String date=o.optString("date","");
-            String label=period+" routine  ·  "+date+"\\n"+
+            String label=period+" routine  ·  "+date+"\n"+
                 o.optInt("done",0)+" of "+o.optInt("total",0)+" tasks  ·  "+
                 duration((int)o.optLong("elapsed",0))+" elapsed";
             LinearLayout sessionCard=new LinearLayout(this);
