@@ -55,10 +55,12 @@ public class MainActivity extends Activity {
         loadTasks();
         currentTask=prefs.getInt("timer_task_index",0); remainingMs=prefs.getLong("timer_remaining_ms",DEFAULT_SECONDS*1000L);
         routineFinished=prefs.getBoolean("routine_finished",false);
+        // Always open on the home screen after launch; saved routine progress remains intact.
         if (prefs.getBoolean("setup_complete",false)) {
-            if (prefs.getBoolean("timer_screen_active",false) && !routineFinished && currentTask>=0 && currentTask<tasks.size()) showTimer();
-            else if (routineFinished) showCompletion(); else showHome();
-        } else showPage();
+            showHome();
+        } else {
+            showPage();
+        }
     }
     @Override protected void onPause() {
         super.onPause();
