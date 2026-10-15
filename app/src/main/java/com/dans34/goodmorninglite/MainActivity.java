@@ -143,8 +143,8 @@ public class MainActivity extends Activity {
         TextView rt=text(activePeriod+" routine",23,INK,true);rt.setGravity(Gravity.START);root.addView(rt);
         ArrayList<Task> visible=routineTasks();
         for(int i=0;i<visible.size();i++){
-            final int ix=i;Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
-            addButton((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->editTask(globalTaskIndex(ix)));
+            Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
+            addButton((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
