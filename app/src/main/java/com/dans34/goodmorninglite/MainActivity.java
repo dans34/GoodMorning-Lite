@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
     private String routineType="Morning routine", activePeriod="Morning", struggle="I'm not sure";
     private int wakeHour=6, wakeMinute=0, page=0, currentTask=0;
     private long remainingMs=DEFAULT_SECONDS*1000L, deadlineMs=0L;
-    private boolean timerRunning=false, routineFinished=false;
+    private boolean timerRunning=false, routineFinished=false, singleTaskMode=false;
     private String currentTaskId="";
     private String libraryCategory="Everyday";
     private Runnable ticker;
@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
         wakeHour=prefs.getInt("wake_hour",6); wakeMinute=prefs.getInt("wake_minute",0);
         loadTasks();
         currentTask=prefs.getInt("timer_task_index",0); currentTaskId=prefs.getString("timer_task_id",""); remainingMs=prefs.getLong("timer_remaining_ms",DEFAULT_SECONDS*1000L);
-        routineFinished=prefs.getBoolean("routine_finished",false);
+        routineFinished=prefs.getBoolean("routine_finished",false); singleTaskMode=prefs.getBoolean("single_task_mode",false);
         // Always open on the home screen after launch; saved routine progress remains intact.
         if (prefs.getBoolean("setup_complete",false)) {
             showHome();
@@ -213,13 +213,8 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(48));taskParams.setMargins(0,dp(3),0,dp(3));root.addView(taskCard,taskParams);
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
-        primary("Start routine",()->{
-            currentTask=firstIncomplete();ArrayList<Task> list=routineTasks();
-            if(list.isEmpty()){Toast.makeText(this,"Add a task to this routine first.",Toast.LENGTH_SHORT).show();return;}
-            if(currentTask>=list.size()){Toast.makeText(this,"All tasks are complete.",Toast.LENGTH_SHORT).show();return;}
-            currentTaskId=list.get(currentTask).id;remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;
-            prefs.edit().putBoolean("timer_screen_active",true).putLong("routine_start_time",System.currentTimeMillis()).apply();persistTimer();showTimer();
-        });
+        primary("Start routine",()->startRoutine(false));
+        addButton("✨  Just get started",()->startRoutine(true));
     }
     private boolean managePageOpen=false;
     private void showManageRoutines(){
@@ -521,13 +516,66 @@ public class MainActivity extends Activity {
         int controlSize=dp(60);
         Button pause=button(timerRunning?"Ⅱ":"▶",()->toggleTimer());pause.setTextSize(24);pause.setTextColor(MUTED);pause.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));pause.setMinWidth(0);pause.setMinimumWidth(0);pause.setContentDescription(timerRunning?"Pause timer":"Resume timer");
         LinearLayout.LayoutParams pauseParams=new LinearLayout.LayoutParams(controlSize,controlSize);pauseParams.setMargins(dp(4),0,dp(4),0);controls.addView(pause,pauseParams);pauseButton=pause;
-        Button complete=button("✓",()->{if(completionAnimationRunning)return;completionAnimationRunning=true;prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();completionAnimationRunning=false;nextTask();});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
+        Button complete=button("✓",()->{if(completionAnimationRunning)return;completionAnimationRunning=true;prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();completionAnimationRunning=false;if(singleTaskMode)showJustStartedChoice();else nextTask();});complete.setTextSize(30);complete.setTextColor(Color.WHITE);complete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));complete.setMinWidth(0);complete.setMinimumWidth(0);complete.setContentDescription("Complete task");
         LinearLayout.LayoutParams completeParams=new LinearLayout.LayoutParams(controlSize,controlSize);completeParams.setMargins(dp(4),0,dp(4),0);controls.addView(complete,completeParams);
         Button skip=button("⏭",()->{Toast.makeText(this,"Task skipped",Toast.LENGTH_SHORT).show();nextTask();});skip.setTextSize(23);skip.setTextColor(MUTED);skip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));skip.setMinWidth(0);skip.setMinimumWidth(0);skip.setContentDescription("Skip task");
         LinearLayout.LayoutParams skipParams=new LinearLayout.LayoutParams(controlSize,controlSize);skipParams.setMargins(dp(4),0,dp(4),0);controls.addView(skip,skipParams);
-        Button end=button("■",()->new AlertDialog.Builder(this).setTitle("End routine?").setMessage("Are you sure you want to end this routine? Your completed tasks will be kept.").setNegativeButton("Keep going",null).setPositiveButton("End routine",(dialog,which)->{stopTimer();prefs.edit().putBoolean("timer_screen_active",false).apply();showHome();}).show());end.setTextSize(20);end.setTextColor(Color.rgb(190,55,85));end.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));end.setMinWidth(0);end.setMinimumWidth(0);end.setContentDescription("End routine");
+        Button end=button("■",()->new AlertDialog.Builder(this).setTitle("End routine?").setMessage("Are you sure you want to end this routine? Your completed tasks will be kept.").setNegativeButton("Keep going",null).setPositiveButton("End routine",(dialog,which)->{stopTimer();singleTaskMode=false;prefs.edit().putBoolean("single_task_mode",false).putBoolean("timer_screen_active",false).apply();showHome();}).show());end.setTextSize(20);end.setTextColor(Color.rgb(190,55,85));end.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));end.setMinWidth(0);end.setMinimumWidth(0);end.setContentDescription("End routine");
         LinearLayout.LayoutParams endParams=new LinearLayout.LayoutParams(controlSize,controlSize);endParams.setMargins(dp(4),0,dp(4),0);controls.addView(end,endParams);
         if(timerRunning)runTicker();
+    }
+
+    private void startRoutine(boolean justGetStarted){
+        ArrayList<Task> list=routineTasks();
+        if(list.isEmpty()){Toast.makeText(this,"Add a task to this routine first.",Toast.LENGTH_SHORT).show();return;}
+        currentTask=firstIncomplete();
+        if(currentTask>=list.size()){Toast.makeText(this,"All tasks are complete.",Toast.LENGTH_SHORT).show();return;}
+        singleTaskMode=justGetStarted;
+        currentTaskId=list.get(currentTask).id;
+        remainingMs=list.get(currentTask).seconds*1000L;
+        timerRunning=true;
+        deadlineMs=System.currentTimeMillis()+remainingMs;
+        long started=System.currentTimeMillis();
+        prefs.edit().putBoolean("single_task_mode",singleTaskMode).putBoolean("timer_screen_active",true).putLong("routine_start_time",started).putString("routine_session_saved_id","").apply();
+        persistTimer();
+        showTimer();
+    }
+
+    private void showJustStartedChoice(){
+        stopTimer();
+        persistTimer();
+        new AlertDialog.Builder(this)
+            .setTitle("Nice work!")
+            .setMessage("You've completed one task. Would you like to continue your routine, or finish for now?")
+            .setNegativeButton("Finish for now",(dialog,which)->{
+                singleTaskMode=false;
+                routineFinished=true;
+                prefs.edit().putBoolean("single_task_mode",false).putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();
+                showCompletion();
+            })
+            .setPositiveButton("Continue routine",(dialog,which)->continueRoutineAfterFirstTask())
+            .show();
+    }
+
+    private void continueRoutineAfterFirstTask(){
+        singleTaskMode=false;
+        prefs.edit().putBoolean("single_task_mode",false).apply();
+        ArrayList<Task> list=routineTasks();
+        int next=currentTask+1;
+        while(next<list.size() && prefs.getBoolean(doneKey(list.get(next)),false))next++;
+        if(next>=list.size()){
+            routineFinished=true;
+            prefs.edit().putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();
+            showCompletion();
+            return;
+        }
+        currentTask=next;
+        currentTaskId=list.get(currentTask).id;
+        remainingMs=list.get(currentTask).seconds*1000L;
+        timerRunning=true;
+        deadlineMs=System.currentTimeMillis()+remainingMs;
+        persistTimer();
+        showTimer();
     }
 
     private void toggleTimer(){ArrayList<Task> list=routineTasks();if(list.isEmpty())return;if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}else{if(remainingMs<=0)remainingMs=list.get(currentTask).seconds*1000L;deadlineMs=System.currentTimeMillis()+remainingMs;timerRunning=true;}persistTimer();showTimer();}
