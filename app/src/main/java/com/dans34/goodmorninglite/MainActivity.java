@@ -30,11 +30,11 @@ public class MainActivity extends Activity {
     private static final int PALE = Color.rgb(249,249,250), YELLOW = Color.rgb(255,224,0);
     private static final int DEFAULT_SECONDS = 120;
     private static class Task {
-        String id, name, notes, period; int seconds;
+        String id, name, notes, period, emoji; int seconds;
         Task(String n, int s, String note) { this(UUID.randomUUID().toString(),n,s,note,"Morning"); }
         Task(String n, int s, String note, String p) { this(UUID.randomUUID().toString(),n,s,note,p); }
-        Task(String taskId,String n,int s,String note,String p) { id=taskId;name=n;seconds=s;notes=note;period=p; }
-        JSONObject json() { JSONObject o=new JSONObject(); try { o.put("id",id);o.put("name",name); o.put("seconds",seconds); o.put("notes",notes); o.put("period",period); } catch(Exception ignored) {} return o; }
+        Task(String taskId,String n,int s,String note,String p) { id=taskId;name=n;seconds=s;notes=note;period=p;emoji=emojiForTaskName(n); }
+        JSONObject json() { JSONObject o=new JSONObject(); try { o.put("id",id);o.put("name",name); o.put("seconds",seconds); o.put("notes",notes); o.put("period",period);o.put("emoji",emoji); } catch(Exception ignored) {} return o; }
     }
     private final ArrayList<Task> tasks = new ArrayList<>();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
         try{JSONArray a=new JSONArray(prefs.getString("routine_tasks",""));for(int i=0;i<a.length();i++){
             JSONObject o=a.getJSONObject(i);String id=o.optString("id","");
             if(id.isEmpty()){id=UUID.randomUUID().toString();migrated=true;}
-            Task t=new Task(id,o.optString("name","Task"),Math.max(1,o.optInt("seconds",DEFAULT_SECONDS)),o.optString("notes",""),o.optString("period",routineType.replace(" routine","")));
+            Task t=new Task(id,o.optString("name","Task"),Math.max(1,o.optInt("seconds",DEFAULT_SECONDS)),o.optString("notes",""),o.optString("period",routineType.replace(" routine","")));t.emoji=o.optString("emoji",emojiForTaskName(t.name));
             tasks.add(t);
             // Preserve existing completion state while moving from index-based to task-based keys.
             String legacy="done_"+t.period.toLowerCase(Locale.ROOT)+"_"+countPriorTasksForPeriod(i,t.period);
@@ -104,6 +104,28 @@ public class MainActivity extends Activity {
     private int globalTaskIndex(int visibleIndex){int n=0;for(int i=0;i<tasks.size();i++)if(tasks.get(i).period.equals(activePeriod)){if(n==visibleIndex)return i;n++;}return -1;}
     private String doneKey(Task task){return "done_"+task.id;}
     private String periodEmoji(String p){return p.equals("Morning")?"☀️":p.equals("Evening")?"🌤️":"🌙";}
+    private static String emojiForTaskName(String name){
+        String n=name.toLowerCase(Locale.ROOT);
+        if(n.contains("water")||n.contains("drink"))return "💧";
+        if(n.contains("bed"))return "🛏️";
+        if(n.contains("weather"))return "🌤️";
+        if(n.contains("shopping")||n.contains("shop"))return "🛒";
+        if(n.contains("parcel")||n.contains("pack"))return "📦";
+        if(n.contains("account")||n.contains("payment")||n.contains("bill"))return "💳";
+        if(n.contains("dish")||n.contains("wash"))return "🍽️";
+        if(n.contains("washing")||n.contains("laundry"))return "🧺";
+        if(n.contains("recycl"))return "♻️";
+        if(n.contains("surface")||n.contains("tidy")||n.contains("clean"))return "🧹";
+        if(n.contains("plan")||n.contains("schedule")||n.contains("arrange"))return "🗓️";
+        if(n.contains("call")||n.contains("check in"))return "📞";
+        if(n.contains("note")||n.contains("write"))return "📝";
+        if(n.contains("stretch")||n.contains("breath"))return "🧘";
+        if(n.contains("walk"))return "🚶";
+        if(n.contains("move"))return "🏃";
+        if(n.contains("workspace")||n.contains("focus")||n.contains("work"))return "📚";
+        if(n.contains("tomorrow")||n.contains("evening"))return "🌙";
+        return "✨";
+    }
     private String duration(int seconds){return seconds/60+" min"+(seconds%60==0?"":" "+seconds%60+" sec");}
     private String greetingForCurrentTime(){
         int hour=java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
@@ -346,7 +368,7 @@ public class MainActivity extends Activity {
         primary("Create a custom task",()->showCustomTaskForm(activePeriod));
     }
     private void addLibraryTask(LibraryTask item){
-        tasks.add(new Task(item.name,item.minutes*60,item.description,activePeriod));saveTasks();
+        Task added=new Task(item.name,item.minutes*60,item.description,activePeriod);added.emoji=item.emoji;tasks.add(added);saveTasks();
         Toast.makeText(this,"Added to "+activePeriod+" routine",Toast.LENGTH_SHORT).show();
         showTaskLibrary();
     }
@@ -414,7 +436,7 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable faceBackground=new android.graphics.drawable.GradientDrawable();
         faceBackground.setShape(android.graphics.drawable.GradientDrawable.OVAL);faceBackground.setColor(Color.rgb(249,249,250));timerFace.setBackground(faceBackground);
         LinearLayout.LayoutParams faceParams=new LinearLayout.LayoutParams(dp(300),dp(300));faceParams.gravity=Gravity.CENTER_HORIZONTAL;faceParams.setMargins(0,dp(4),0,dp(8));root.addView(timerFace,faceParams);
-        TextView taskIcon=text(periodEmoji(activePeriod),44,INK,false);
+        TextView taskIcon=text(list.get(currentTask).emoji,44,INK,false);
         LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(-1,dp(76));iconParams.topMargin=dp(18);timerFace.addView(taskIcon,iconParams);
         countdownView=text(formatTime(remainingMs),54,INK,true);
         LinearLayout.LayoutParams countdownParams=new LinearLayout.LayoutParams(-1,dp(78));countdownParams.topMargin=dp(4);timerFace.addView(countdownView,countdownParams);
