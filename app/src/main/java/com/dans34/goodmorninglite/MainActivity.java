@@ -162,7 +162,9 @@ public class MainActivity extends Activity {
             Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
             Button taskRow=button((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
             taskRow.setTextSize(14);taskRow.setPadding(dp(8),0,dp(8),0);
-            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,0,0,0);root.addView(taskRow,taskParams);
+            taskRow.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(245,245,248)));
+            taskRow.setElevation(dp(1));
+            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,dp(3),0,dp(3));root.addView(taskRow,taskParams);
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
