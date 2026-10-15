@@ -23,16 +23,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.UUID;
 
 public class MainActivity extends Activity {
     private static final int INK = Color.rgb(57,58,70), MUTED = Color.rgb(140,141,150);
     private static final int PALE = Color.rgb(249,249,250), YELLOW = Color.rgb(255,224,0);
     private static final int DEFAULT_SECONDS = 120;
     private static class Task {
-        String name, notes, period; int seconds;
-        Task(String n, int s, String note) { this(n,s,note,"Morning"); }
-        Task(String n, int s, String note, String p) { name=n; seconds=s; notes=note; period=p; }
-        JSONObject json() { JSONObject o=new JSONObject(); try { o.put("name",name); o.put("seconds",seconds); o.put("notes",notes); o.put("period",period); } catch(Exception ignored) {} return o; }
+        String id, name, notes, period; int seconds;
+        Task(String n, int s, String note) { this(UUID.randomUUID().toString(),n,s,note,"Morning"); }
+        Task(String n, int s, String note, String p) { this(UUID.randomUUID().toString(),n,s,note,p); }
+        Task(String taskId,String n,int s,String note,String p) { id=taskId;name=n;seconds=s;notes=note;period=p; }
+        JSONObject json() { JSONObject o=new JSONObject(); try { o.put("id",id);o.put("name",name); o.put("seconds",seconds); o.put("notes",notes); o.put("period",period); } catch(Exception ignored) {} return o; }
     }
     private final ArrayList<Task> tasks = new ArrayList<>();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -42,6 +44,7 @@ public class MainActivity extends Activity {
     private int wakeHour=6, wakeMinute=0, page=0, currentTask=0;
     private long remainingMs=DEFAULT_SECONDS*1000L, deadlineMs=0L;
     private boolean timerRunning=false, routineFinished=false;
+    private String currentTaskId="";
     private String libraryCategory="Everyday";
     private Runnable ticker;
     private TextView countdownView;
@@ -53,7 +56,7 @@ public class MainActivity extends Activity {
         routineType=prefs.getString("routine_type",routineType); activePeriod=prefs.getString("active_period",routineType.replace(" routine","")); struggle=prefs.getString("struggle",struggle);
         wakeHour=prefs.getInt("wake_hour",6); wakeMinute=prefs.getInt("wake_minute",0);
         loadTasks();
-        currentTask=prefs.getInt("timer_task_index",0); remainingMs=prefs.getLong("timer_remaining_ms",DEFAULT_SECONDS*1000L);
+        currentTask=prefs.getInt("timer_task_index",0); currentTaskId=prefs.getString("timer_task_id",""); remainingMs=prefs.getLong("timer_remaining_ms",DEFAULT_SECONDS*1000L);
         routineFinished=prefs.getBoolean("routine_finished",false);
         // Always open on the home screen after launch; saved routine progress remains intact.
         if (prefs.getBoolean("setup_complete",false)) {
@@ -80,11 +83,25 @@ public class MainActivity extends Activity {
     private void addButton(String label,Runnable action){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(4),0,dp(4));root.addView(button(label,action),p);}
     private void primary(String label,Runnable action){Button b=button(label,action);b.setTextColor(Color.WHITE);b.setTextSize(17);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(58));p.setMargins(0,dp(14),0,dp(8));root.addView(b,p);}
     private void showPage(){if(page==0){startScreen();heading("Which routine should we build first?","We'll build just one for now.");addButton("☀  Morning routine",()->{routineType="Morning routine";activePeriod="Morning";page=1;showPage();});addButton("☾  Evening routine",()->{routineType="Evening routine";activePeriod="Evening";page=1;showPage();});}else if(page==1){startScreen();heading("What do you struggle with?","We'll use this to shape your routine.");String[] a={"Planning without taking action","Managing my schedule","Staying focused","Remembering tasks","Being busy without breaks","Feeling drained and unmotivated","I'm not sure"};for(String x:a)addButton((struggle.equals(x)?"✓  ":"")+" "+x,()->{struggle=x;page=2;showPage();});}else if(page==2){startScreen();heading("What time do you wake up?","You can change this later.");root.addView(text(String.format(Locale.getDefault(),"%d:%02d %s",wakeHour%12==0?12:wakeHour%12,wakeMinute,wakeHour<12?"AM":"PM"),38,INK,true));addButton("Choose time",()->new TimePickerDialog(this,(v,h,m)->{wakeHour=h;wakeMinute=m;showPage();},wakeHour,wakeMinute,false).show());primary("Next",()->{page=3;showPage();});}else{startScreen();heading("Your first routine","Start with these simple tasks. You can edit them any time.");for(Task t:tasks)root.addView(text("•  "+t.name+" · "+duration(t.seconds),16,INK,false));primary("Looks good",()->{prefs.edit().putBoolean("setup_complete",true).putString("routine_type",routineType).putString("active_period",activePeriod).putString("struggle",struggle).putInt("wake_hour",wakeHour).putInt("wake_minute",wakeMinute).apply();saveTasks();showHome();});}}
-    private void loadTasks(){tasks.clear();try{JSONArray a=new JSONArray(prefs.getString("routine_tasks",""));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);tasks.add(new Task(o.optString("name","Task"),Math.max(1,o.optInt("seconds",DEFAULT_SECONDS)),o.optString("notes",""),o.optString("period",routineType.replace(" routine",""))));}}catch(Exception ignored){}if(tasks.isEmpty()){tasks.add(new Task("Stretch and drink a glass of water",120,"","Morning"));tasks.add(new Task("Tidy up the bed",120,"","Morning"));tasks.add(new Task("Check the weather",120,"","Morning"));}}
+    private void loadTasks(){
+        tasks.clear();boolean migrated=false;
+        try{JSONArray a=new JSONArray(prefs.getString("routine_tasks",""));for(int i=0;i<a.length();i++){
+            JSONObject o=a.getJSONObject(i);String id=o.optString("id","");
+            if(id.isEmpty()){id=UUID.randomUUID().toString();migrated=true;}
+            Task t=new Task(id,o.optString("name","Task"),Math.max(1,o.optInt("seconds",DEFAULT_SECONDS)),o.optString("notes",""),o.optString("period",routineType.replace(" routine","")));
+            tasks.add(t);
+            // Preserve existing completion state while moving from index-based to task-based keys.
+            String legacy="done_"+t.period.toLowerCase(Locale.ROOT)+"_"+countPriorTasksForPeriod(i,t.period);
+            if(prefs.getBoolean(legacy,false))prefs.edit().putBoolean("done_"+t.id,true).apply();
+        }}catch(Exception ignored){}
+        if(tasks.isEmpty()){tasks.add(new Task("Stretch and drink a glass of water",120,"","Morning"));tasks.add(new Task("Tidy up the bed",120,"","Morning"));tasks.add(new Task("Check the weather",120,"","Morning"));migrated=true;}
+        if(migrated)saveTasks();
+    }
+    private int countPriorTasksForPeriod(int index,String period){int count=0;try{JSONArray a=new JSONArray(prefs.getString("routine_tasks",""));for(int i=0;i<index;i++)if(a.getJSONObject(i).optString("period",routineType.replace(" routine","")).equals(period))count++;}catch(Exception ignored){}return count;}
     private void saveTasks(){JSONArray a=new JSONArray();for(Task t:tasks)a.put(t.json());prefs.edit().putString("routine_tasks",a.toString()).putString("active_period",activePeriod).apply();}
     private ArrayList<Task> routineTasks(){ArrayList<Task> out=new ArrayList<>();for(Task t:tasks)if(t.period.equals(activePeriod))out.add(t);return out;}
     private int globalTaskIndex(int visibleIndex){int n=0;for(int i=0;i<tasks.size();i++)if(tasks.get(i).period.equals(activePeriod)){if(n==visibleIndex)return i;n++;}return -1;}
-    private String doneKey(int index){return "done_"+activePeriod.toLowerCase(Locale.ROOT)+"_"+index;}
+    private String doneKey(Task task){return "done_"+task.id;}
     private String periodEmoji(String p){return p.equals("Morning")?"☀️":p.equals("Evening")?"🌤️":"🌙";}
     private String duration(int seconds){return seconds/60+" min"+(seconds%60==0?"":" "+seconds%60+" sec");}
     private String greetingForCurrentTime(){
@@ -126,16 +143,16 @@ public class MainActivity extends Activity {
         TextView rt=text(activePeriod+" routine",23,INK,true);rt.setGravity(Gravity.START);root.addView(rt);
         ArrayList<Task> visible=routineTasks();
         for(int i=0;i<visible.size();i++){
-            final int ix=i;Task t=visible.get(i);
-            addButton((prefs.getBoolean(doneKey(i),false)?"✓  ":"")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->editTask(globalTaskIndex(ix)));
+            final int ix=i;Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
+            addButton((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->editTask(globalTaskIndex(ix)));
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
             currentTask=firstIncomplete();ArrayList<Task> list=routineTasks();
             if(list.isEmpty()){Toast.makeText(this,"Add a task to this routine first.",Toast.LENGTH_SHORT).show();return;}
             if(currentTask>=list.size()){Toast.makeText(this,"All tasks are complete.",Toast.LENGTH_SHORT).show();return;}
-            remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;
-            prefs.edit().putBoolean("timer_screen_active",true).apply();persistTimer();showTimer();
+            currentTaskId=list.get(currentTask).id;remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;
+            prefs.edit().putBoolean("timer_screen_active",true).putLong("routine_start_time",System.currentTimeMillis()).apply();persistTimer();showTimer();
         });
     }
     private boolean managePageOpen=false;
@@ -151,7 +168,7 @@ public class MainActivity extends Activity {
         addButton("‹ Back to home",this::showHome);
     }
     private void returnToRoutinePage(){if(managePageOpen)showManageRoutines();else showHome();}
-    private int firstIncomplete(){ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)if(!prefs.getBoolean(doneKey(i),false))return i;return list.size();}
+    private int firstIncomplete(){ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)if(!prefs.getBoolean(doneKey(list.get(i)),false))return i;return list.size();}
     private void taskActions(int index){String[] options={"Edit task","Move up","Move down","Delete task"};new AlertDialog.Builder(this).setTitle(tasks.get(index).name).setItems(options,(d,which)->{if(which==0)editTask(index);else if(which==1&&index>0){Task t=tasks.remove(index);tasks.add(index-1,t);saveTasks();returnToRoutinePage();}else if(which==2&&index<tasks.size()-1){Task t=tasks.remove(index);tasks.add(index+1,t);saveTasks();returnToRoutinePage();}else if(which==3)new AlertDialog.Builder(this).setMessage("Delete this task?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(dd,w)->{tasks.remove(index);saveTasks();returnToRoutinePage();}).show();}).show();}
     private void showAddTaskType(){showTaskLibrary();}
 
@@ -284,24 +301,39 @@ public class MainActivity extends Activity {
     private void showTimer(){
         if(ticker!=null)handler.removeCallbacks(ticker);
         ArrayList<Task> list=routineTasks();if(list.isEmpty()){showHome();return;}
-        currentTask=Math.max(0,Math.min(currentTask,list.size()-1));startScreen();
-        heading(activePeriod+" routine","TASK "+(currentTask+1)+" OF "+list.size());
+        if(!currentTaskId.isEmpty()){for(int i=0;i<list.size();i++)if(list.get(i).id.equals(currentTaskId)){currentTask=i;break;}}
+        currentTask=Math.max(0,Math.min(currentTask,list.size()-1));currentTaskId=list.get(currentTask).id;startScreen();
+        int completed=0;for(Task task:list)if(prefs.getBoolean(doneKey(task),false))completed++;
+        heading(activePeriod+" routine","TASK "+(currentTask+1)+" OF "+list.size()+" · "+completed+" COMPLETED");
+        android.widget.ProgressBar progress=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
+        progress.setMax(list.size());progress.setProgress(completed);progress.setProgressTintList(android.content.res.ColorStateList.valueOf(YELLOW));progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
+        LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(-1,dp(8));pp.bottomMargin=dp(20);root.addView(progress,pp);
         root.addView(text(list.get(currentTask).name,27,INK,true));
         if(!list.get(currentTask).notes.isEmpty())root.addView(text(list.get(currentTask).notes,16,MUTED,false));
         countdownView=text(formatTime(remainingMs),54,INK,true);root.addView(countdownView,new LinearLayout.LayoutParams(-1,dp(150)));
+        root.addView(text("About "+duration(list.get(currentTask).seconds)+" planned",14,MUTED,false));
         root.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         pauseButton=button(timerRunning?"Pause":"Resume",()->toggleTimer());root.addView(pauseButton);
-        primary("Complete task",()->{prefs.edit().putBoolean(doneKey(currentTask),true).apply();nextTask();});
+        primary("Complete task",()->{prefs.edit().putBoolean(doneKey(list.get(currentTask)),true).apply();nextTask();});
         addButton("Skip task",this::nextTask);
         addButton("End routine",()->{stopTimer();prefs.edit().putBoolean("timer_screen_active",false).apply();showHome();});
         if(timerRunning)runTicker();
     }
     private void toggleTimer(){ArrayList<Task> list=routineTasks();if(list.isEmpty())return;if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}else{if(remainingMs<=0)remainingMs=list.get(currentTask).seconds*1000L;deadlineMs=System.currentTimeMillis()+remainingMs;timerRunning=true;}persistTimer();showTimer();}
     private void runTicker(){ticker=new Runnable(){public void run(){if(!timerRunning||countdownView==null)return;remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());countdownView.setText(formatTime(remainingMs));if(remainingMs==0){timerRunning=false;persistTimer();Toast.makeText(MainActivity.this,"Time is up — complete the task or continue.",Toast.LENGTH_LONG).show();if(pauseButton!=null)pauseButton.setText("Resume");}else handler.postDelayed(this,250);}};handler.post(ticker);}
-    private void nextTask(){stopTimer();ArrayList<Task> list=routineTasks();if(currentTask+1>=list.size()){routineFinished=true;prefs.edit().putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();showCompletion();return;}currentTask++;remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;persistTimer();showTimer();}
-    private void showCompletion(){stopTimer();startScreen();ArrayList<Task> list=routineTasks();heading("You're all done!","You completed your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.");int done=0;for(int i=0;i<list.size();i++)if(prefs.getBoolean(doneKey(i),false))done++;root.addView(text(done+" of "+list.size()+" tasks completed",20,INK,true));primary("Back to Today",this::showHome);addButton("Run again",this::startNewRoutine);}
-    private void startNewRoutine(){stopTimer();ArrayList<Task> list=routineTasks();for(int i=0;i<list.size();i++)prefs.edit().remove(doneKey(i)).apply();currentTask=0;remainingMs=list.isEmpty()?DEFAULT_SECONDS*1000L:list.get(0).seconds*1000L;routineFinished=false;prefs.edit().putBoolean("routine_finished",false).putBoolean("timer_screen_active",false).putInt("timer_task_index",0).putLong("timer_remaining_ms",remainingMs).apply();showHome();}
+    private void nextTask(){stopTimer();ArrayList<Task> list=routineTasks();if(currentTask+1>=list.size()){routineFinished=true;prefs.edit().putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();showCompletion();return;}currentTask++;currentTaskId=list.get(currentTask).id;remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;persistTimer();showTimer();}
+    private void showCompletion(){
+        stopTimer();startScreen();ArrayList<Task> list=routineTasks();heading("You're all done!","You made time for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.");
+        int done=0,totalSeconds=0;for(Task task:list){if(prefs.getBoolean(doneKey(task),false)){done++;totalSeconds+=task.seconds;}}
+        long started=prefs.getLong("routine_start_time",System.currentTimeMillis());long elapsed=Math.max(0,(System.currentTimeMillis()-started)/1000L);
+        root.addView(text(done+" of "+list.size()+" tasks completed",21,INK,true));
+        TextView stats=text("Planned time completed: "+duration(totalSeconds)+"\nTime in this session: "+duration((int)elapsed),15,MUTED,false);
+        stats.setGravity(Gravity.CENTER);LinearLayout.LayoutParams statp=new LinearLayout.LayoutParams(-1,-2);statp.setMargins(0,dp(16),0,dp(22));root.addView(stats,statp);
+        android.widget.ProgressBar progress=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(Math.max(1,list.size()));progress.setProgress(done);progress.setProgressTintList(android.content.res.ColorStateList.valueOf(YELLOW));root.addView(progress,new LinearLayout.LayoutParams(-1,dp(8)));
+        primary("Back to Today",this::showHome);addButton("Run again",this::startNewRoutine);
+    }
+    private void startNewRoutine(){stopTimer();ArrayList<Task> list=routineTasks();SharedPreferences.Editor editor=prefs.edit();for(Task task:list)editor.remove(doneKey(task));currentTask=0;currentTaskId=list.isEmpty()?"":list.get(0).id;remainingMs=list.isEmpty()?DEFAULT_SECONDS*1000L:list.get(0).seconds*1000L;routineFinished=false;editor.putBoolean("routine_finished",false).putBoolean("timer_screen_active",false).putInt("timer_task_index",0).putString("timer_task_id",currentTaskId).putLong("timer_remaining_ms",remainingMs).apply();showHome();}
     private void stopTimer(){timerRunning=false;if(ticker!=null)handler.removeCallbacks(ticker);ticker=null;}
     private String formatTime(long ms){long s=Math.max(0,(ms+999)/1000);return String.format(Locale.getDefault(),"%02d:%02d",s/60,s%60);}
-    private void persistTimer(){if(timerRunning)remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());prefs.edit().putInt("timer_task_index",currentTask).putLong("timer_remaining_ms",remainingMs).putBoolean("timer_running",timerRunning).putBoolean("routine_finished",routineFinished).apply();}
+    private void persistTimer(){if(timerRunning)remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());prefs.edit().putInt("timer_task_index",currentTask).putString("timer_task_id",currentTaskId).putLong("timer_remaining_ms",remainingMs).putBoolean("timer_running",timerRunning).putBoolean("routine_finished",routineFinished).apply();}
 }
