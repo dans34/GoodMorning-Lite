@@ -89,3 +89,11 @@
 - Improved shared screen scrolling and tightened header spacing while preserving the approved home-screen design.
 - Fixed Java source issues encountered during iteration, including a missing `GridLayout` import, a lambda button-initialisation error, and a leftover reference to the shelved celebration code.
 - Android Studio build and device behaviour should be verified after each latest change; changes have been committed to the repository, but not independently compiled by the assistant.
+
+## 2026-10-15 — Weekly history overview
+
+- Redesigned History & streaks with a highlighted current streak summary.
+- Added this-week metrics for fully completed routines, sessions recorded and task completion rate.
+- Added a seven-day activity row and clearer individual session cards showing routine, date, task count and elapsed time.
+- Kept history stored locally and reused the existing session records; no new permissions or online services added.
+- Build and Nokia C12 behaviour still need to be checked in Android Studio.
