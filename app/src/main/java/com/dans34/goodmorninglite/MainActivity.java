@@ -91,7 +91,18 @@ public class MainActivity extends Activity {
     private void showHome(){
         if(ticker!=null)handler.removeCallbacks(ticker);
         startScreen();
-        heading(greetingForCurrentTime(),"Your routine, one step at a time.");
+        LinearLayout header=new LinearLayout(this);header.setOrientation(0);header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout titleBlock=new LinearLayout(this);titleBlock.setOrientation(1);
+        TextView greeting=text(greetingForCurrentTime(),25,INK,true);greeting.setGravity(Gravity.START);
+        TextView subtitle=text("Your routine, one step at a time.",15,MUTED,false);subtitle.setGravity(Gravity.START);
+        titleBlock.addView(greeting);LinearLayout.LayoutParams subParams=new LinearLayout.LayoutParams(-1,-2);subParams.topMargin=dp(7);titleBlock.addView(subtitle,subParams);
+        header.addView(titleBlock,new LinearLayout.LayoutParams(0,-2,1));
+        Button add=new Button(this);add.setText("+");add.setTextSize(28);add.setAllCaps(false);add.setTextColor(INK);
+        add.setPadding(0,0,0,dp(3));add.setMinWidth(0);add.setMinimumWidth(0);add.setMinHeight(0);add.setMinimumHeight(0);
+        add.setBackgroundTintList(android.content.res.ColorStateList.valueOf(YELLOW));
+        LinearLayout.LayoutParams addParams=new LinearLayout.LayoutParams(dp(48),dp(48));addParams.leftMargin=dp(8);
+        header.addView(add,addParams);add.setOnClickListener(v->showAddTaskType());root.addView(header);
+        LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(22);header.setLayoutParams(headerGap);
         for(String p:new String[]{"Morning","Evening","Night"}){
             final String chosen=p;
             addButton((activePeriod.equals(p)?"✓  ":"")+periodEmoji(p)+"  "+p,()->{
@@ -114,7 +125,6 @@ public class MainActivity extends Activity {
             remainingMs=list.get(currentTask).seconds*1000L;timerRunning=true;deadlineMs=System.currentTimeMillis()+remainingMs;
             prefs.edit().putBoolean("timer_screen_active",true).apply();persistTimer();showTimer();
         });
-        addButton("+ Add task",()->showAddTaskType());
         TextView manage=text("MANAGE ROUTINE",13,MUTED,true);manage.setGravity(Gravity.START);
         LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-1,-2);mp.setMargins(0,dp(22),0,dp(6));root.addView(manage,mp);
         for(int i=0;i<visible.size();i++){final int ix=globalTaskIndex(i);addButton("✏️  "+visible.get(i).name+"  ·  ⚙️",()->taskActions(ix));}
