@@ -51,18 +51,14 @@ jobs:
             mkdir -p screenshots
             adb wait-for-device
 
-            # Wait for Android itself to finish booting before installing or launching.
-            booted=0
-            for attempt in $(seq 1 120); do
-              if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
-                booted=1
-                break
-              fi
-              sleep 2
-            done
-            if [ "$booted" -ne 1 ]; then
-              adb logcat -d > screenshots/boot-failure-logcat.txt || true
-              echo "Emulator did not finish booting within 240 seconds." >&2
+            # The emulator-runner action already waits for boot. Give Android a short
+            # settling period, then verify the boot flag once rather than polling a
+            # potentially unresponsive system_server repeatedly.
+            sleep 10
+            boot_state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [ "$boot_state" != "1" ]; then
+              adb logcat -d > screenshots/boot-failure-logcat.txt 2>&1 || true
+              echo "Android did not report sys.boot_completed=1 after emulator startup." >&2
               exit 1
             fi
 
