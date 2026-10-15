@@ -160,11 +160,25 @@ public class MainActivity extends Activity {
         ArrayList<Task> visible=routineTasks();
         for(int i=0;i<visible.size();i++){
             Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
-            Button taskRow=button((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
-            taskRow.setTextSize(14);taskRow.setPadding(dp(8),0,dp(8),0);
-            taskRow.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(245,245,248)));
-            taskRow.setElevation(dp(1));
-            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,dp(3),0,dp(3));root.addView(taskRow,taskParams);
+            LinearLayout taskCard=new LinearLayout(this);taskCard.setOrientation(0);taskCard.setGravity(Gravity.CENTER_VERTICAL);
+            taskCard.setPadding(dp(12),0,dp(12),0);
+            android.graphics.drawable.GradientDrawable cardBackground=new android.graphics.drawable.GradientDrawable();
+            cardBackground.setColor(Color.rgb(245,245,248));cardBackground.setCornerRadius(dp(12));
+            taskCard.setBackground(cardBackground);taskCard.setClickable(true);taskCard.setFocusable(true);
+            android.util.TypedValue outValue=new android.util.TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackground,outValue,true);
+            android.graphics.drawable.Drawable ripple=android.graphics.drawable.Drawable.createFromXml(getResources(),getResources().getXml(outValue.resourceId));
+            if(android.os.Build.VERSION.SDK_INT>=23)taskCard.setForeground(ripple);
+            taskCard.setOnClickListener(v->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
+            TextView number=text(String.valueOf(i+1),12,MUTED,true);
+            taskCard.addView(number,new LinearLayout.LayoutParams(dp(22),-2));
+            TextView status=text(completed?"✓":"○",18,completed?Color.rgb(72,145,104):MUTED,true);
+            LinearLayout.LayoutParams statusParams=new LinearLayout.LayoutParams(dp(28),-2);statusParams.leftMargin=dp(4);taskCard.addView(status,statusParams);
+            TextView taskName=text(t.name,14,INK,true);taskName.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);taskName.setMaxLines(2);
+            taskCard.addView(taskName,new LinearLayout.LayoutParams(0,-2,1));
+            TextView taskDuration=text(duration(t.seconds),12,MUTED,false);
+            LinearLayout.LayoutParams durationParams=new LinearLayout.LayoutParams(-2,-2);durationParams.leftMargin=dp(8);taskCard.addView(taskDuration,durationParams);
+            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(48));taskParams.setMargins(0,dp(3),0,dp(3));root.addView(taskCard,taskParams);
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
