@@ -227,12 +227,29 @@ public class MainActivity extends Activity {
             View line=new View(this);line.setBackgroundColor(Color.rgb(239,239,242));list.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
         }
         listScroll.addView(list);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,0,1);lp.topMargin=dp(8);root.addView(listScroll,lp);
-        primary("Create a custom task",()->editTaskForPeriod(activePeriod));
+        primary("Create a custom task",()->showCustomTaskForm(activePeriod));
     }
     private void addLibraryTask(LibraryTask item){
         tasks.add(new Task(item.name,item.minutes*60,item.description,activePeriod));saveTasks();
         Toast.makeText(this,"Added to "+activePeriod+" routine",Toast.LENGTH_SHORT).show();
         showTaskLibrary();
+    }
+    private void showCustomTaskForm(String period){
+        startScreen();heading("Create a task","Make it your own for your "+period.toLowerCase(Locale.ROOT)+" routine.");
+        EditText name=new EditText(this);name.setHint("What do you want to do?");name.setSingleLine(true);root.addView(name,new LinearLayout.LayoutParams(-1,dp(56)));
+        TextView durationLabel=text("DURATION (MINUTES)",12,MUTED,true);durationLabel.setGravity(Gravity.START);LinearLayout.LayoutParams dl=new LinearLayout.LayoutParams(-1,-2);dl.topMargin=dp(14);root.addView(durationLabel,dl);
+        EditText minutes=new EditText(this);minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText("5");minutes.setSingleLine(true);root.addView(minutes,new LinearLayout.LayoutParams(-1,dp(56)));
+        TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);LinearLayout.LayoutParams nl=new LinearLayout.LayoutParams(-1,-2);nl.topMargin=dp(14);root.addView(notesLabel,nl);
+        EditText notes=new EditText(this);notes.setHint("Add a helpful reminder");notes.setMinLines(2);notes.setGravity(Gravity.TOP|Gravity.START);root.addView(notes,new LinearLayout.LayoutParams(-1,dp(92)));
+        root.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
+        primary("Save task",()->{
+            String n=name.getText().toString().trim();if(n.isEmpty()){name.setError("Enter a task name");return;}
+            int mins;try{mins=Integer.parseInt(minutes.getText().toString());}catch(Exception e){mins=5;}
+            mins=Math.max(1,Math.min(240,mins));tasks.add(new Task(n,mins*60,notes.getText().toString().trim(),period));saveTasks();
+            Toast.makeText(this,"Added to "+period+" routine",Toast.LENGTH_SHORT).show();
+            if(managePageOpen)showManageRoutines();else showHome();
+        });
+        addButton("Cancel",this::showTaskLibrary);
     }
     private void editTaskForPeriod(String period){
         final EditText name=new EditText(this);
