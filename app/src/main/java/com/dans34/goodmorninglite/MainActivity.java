@@ -115,11 +115,12 @@ public class MainActivity extends Activity {
         managePageOpen=false;
         if(ticker!=null)handler.removeCallbacks(ticker);
         startScreen();
+        root.setPadding(dp(22),dp(8),dp(22),dp(16));
         LinearLayout header=new LinearLayout(this);header.setOrientation(0);header.setGravity(Gravity.TOP);
         LinearLayout titleBlock=new LinearLayout(this);titleBlock.setOrientation(1);
         TextView greeting=text(greetingForCurrentTime(),25,INK,true);greeting.setGravity(Gravity.START);
         TextView subtitle=text("Your routine, one step at a time.",15,MUTED,false);subtitle.setGravity(Gravity.START);
-        titleBlock.addView(greeting);LinearLayout.LayoutParams subParams=new LinearLayout.LayoutParams(-1,-2);subParams.topMargin=dp(7);titleBlock.addView(subtitle,subParams);
+        titleBlock.addView(greeting);LinearLayout.LayoutParams subParams=new LinearLayout.LayoutParams(-1,-2);subParams.topMargin=dp(3);titleBlock.addView(subtitle,subParams);
         header.addView(titleBlock,new LinearLayout.LayoutParams(0,-2,1));
         LinearLayout actions=new LinearLayout(this);actions.setOrientation(0);actions.setGravity(Gravity.TOP);
         Button add=new Button(this);add.setText("+");add.setTextSize(28);add.setAllCaps(false);add.setTextColor(INK);
@@ -136,7 +137,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams historyParams=new LinearLayout.LayoutParams(dp(38),dp(38));historyParams.leftMargin=dp(4);actions.addView(history,historyParams);history.setOnClickListener(v->showHistory());
         LinearLayout.LayoutParams actionBlockParams=new LinearLayout.LayoutParams(-2,dp(42));actionBlockParams.topMargin=dp(1);header.addView(actions,actionBlockParams);
         root.addView(header);
-        LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(12);header.setLayoutParams(headerGap);
+        LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(8);header.setLayoutParams(headerGap);
         TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);
         LinearLayout periodRow=new LinearLayout(this);periodRow.setOrientation(0);periodRow.setGravity(Gravity.CENTER_VERTICAL);
         for(String p:new String[]{"Morning","Evening","Night"}){
