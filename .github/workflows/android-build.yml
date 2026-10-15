@@ -5,11 +5,8 @@ concurrency:
   group: goodmorning-lite-emulator-tests
   cancel-in-progress: false
 
+# Paused during investigation. Runs only when manually started.
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
