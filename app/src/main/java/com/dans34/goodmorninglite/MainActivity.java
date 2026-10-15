@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
     private int dp(float v){return (int)(v*getResources().getDisplayMetrics().density+0.5f);}
     private TextView text(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setGravity(Gravity.CENTER);if(bold)t.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));return t;}
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(1);l.setPadding(dp(22),dp(16),dp(22),dp(16));return l;}
-    private void startScreen(){root=column();root.setBackgroundColor(Color.WHITE);setContentView(root);}
+    private void startScreen(){ScrollView screenScroll=new ScrollView(this);screenScroll.setFillViewport(true);screenScroll.setClipToPadding(false);root=column();root.setBackgroundColor(Color.WHITE);screenScroll.addView(root,new ScrollView.LayoutParams(-1,-2));setContentView(screenScroll);}
     private void heading(String title,String sub){TextView h=text(title,25,INK,true);h.setGravity(Gravity.START);root.addView(h);TextView s=text(sub,15,MUTED,false);s.setGravity(Gravity.START);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(7),0,dp(18));root.addView(s,p);}
     private Button button(String label,Runnable action){Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setAllCaps(false);b.setTextColor(INK);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));b.setMinHeight(dp(48));b.setOnClickListener(v->action.run());return b;}
     private void addButton(String label,Runnable action){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(4),0,dp(4));root.addView(button(label,action),p);}
