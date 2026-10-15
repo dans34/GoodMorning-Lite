@@ -427,14 +427,23 @@ public class MainActivity extends Activity {
         EditText minutes=new EditText(this);minutes.setHint("Duration in minutes");minutes.setInputType(InputType.TYPE_CLASS_NUMBER);minutes.setText(String.valueOf(Math.max(1,(old.seconds+59)/60)));form.addView(minutes);
         EditText notes=new EditText(this);notes.setHint("Notes (optional)");notes.setMinLines(2);notes.setText(old.notes);form.addView(notes);
         final String[] chosenEmoji={old.emoji==null||old.emoji.isEmpty()?emojiForTaskName(old.name):old.emoji};
-        final Button[] emojiButton={null};
-        emojiButton[0]=button(chosenEmoji[0]+"  Choose task icon",()->{
-            String[] emojis={"✨","💧","🛏️","🌤️","🛒","📦","💳","🍽️","🧺","♻️","🧹","🗓️","📞","📝","🧘","🚶","🏃","📚","🌙","❤️","⭐","☕","🍎","🎯"};
-            new AlertDialog.Builder(this).setTitle("Choose task icon").setItems(emojis,(dialog,which)->{
-                chosenEmoji[0]=emojis[which];emojiButton[0].setText(chosenEmoji[0]+"  Choose task icon");
-            }).show();
-        });
-        form.addView(emojiButton[0]);
+        LinearLayout emojiSection=new LinearLayout(this);emojiSection.setOrientation(1);
+        TextView emojiLabel=text("TASK ICON",12,MUTED,true);emojiLabel.setGravity(Gravity.START);
+        LinearLayout.LayoutParams emojiLabelParams=new LinearLayout.LayoutParams(-1,-2);emojiLabelParams.topMargin=dp(12);emojiSection.addView(emojiLabel,emojiLabelParams);
+        TextView emojiPreview=text(chosenEmoji[0],28,INK,false);
+        android.graphics.drawable.GradientDrawable previewBg=new android.graphics.drawable.GradientDrawable();previewBg.setColor(PALE);previewBg.setCornerRadius(dp(12));emojiPreview.setBackground(previewBg);
+        emojiPreview.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams previewParams=new LinearLayout.LayoutParams(dp(56),dp(48));previewParams.topMargin=dp(6);emojiSection.addView(emojiPreview,previewParams);
+        String[] emojis={"✨","💧","🛏️","🌤️","🛒","📦","💳","🍽️","🧺","♻️","🧹","🗓️","📞","📝","🧘","🚶","🏃","📚","🌙","❤️","⭐","☕","🍎","🎯"};
+        GridLayout emojiGrid=new GridLayout(this);emojiGrid.setColumnCount(6);emojiGrid.setUseDefaultMargins(false);
+        for(String emoji:emojis){
+            Button emojiChoice=button(emoji,()->{chosenEmoji[0]=emoji;emojiPreview.setText(emoji);});
+            emojiChoice.setTextSize(22);emojiChoice.setPadding(0,0,0,0);emojiChoice.setMinWidth(0);emojiChoice.setMinimumWidth(0);emojiChoice.setMinHeight(0);emojiChoice.setMinimumHeight(0);
+            emojiChoice.setBackgroundTintList(android.content.res.ColorStateList.valueOf(emoji.equals(chosenEmoji[0])?Color.rgb(255,248,190):PALE));
+            GridLayout.LayoutParams ep=new GridLayout.LayoutParams();ep.width=0;ep.height=dp(44);ep.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);ep.setMargins(dp(2),dp(2),dp(2),dp(2));emojiGrid.addView(emojiChoice,ep);
+        }
+        LinearLayout.LayoutParams gridParams=new LinearLayout.LayoutParams(-1,-2);gridParams.topMargin=dp(6);emojiSection.addView(emojiGrid,gridParams);
+        form.addView(emojiSection);
         new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
             String n=name.getText().toString().trim();
             if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
