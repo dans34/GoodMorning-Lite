@@ -159,7 +159,9 @@ public class MainActivity extends Activity {
         ArrayList<Task> visible=routineTasks();
         for(int i=0;i<visible.size();i++){
             Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
-            addButton((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
+            Button taskRow=button((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
+            taskRow.setTextSize(14);taskRow.setPadding(dp(8),0,dp(8),0);
+            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,dp(2),0,dp(2));root.addView(taskRow,taskParams);
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
@@ -173,11 +175,20 @@ public class MainActivity extends Activity {
     private boolean managePageOpen=false;
     private void showManageRoutines(){
         managePageOpen=true;startScreen();heading("Manage routines","Organise tasks for each part of your day.");
-        for(String p:new String[]{"Morning","Evening","Night"}){final String chosen=p;addButton((activePeriod.equals(p)?"✓  ":"")+periodEmoji(p)+"  "+p,()->{activePeriod=chosen;routineType=chosen+" routine";prefs.edit().putString("active_period",activePeriod).putString("routine_type",routineType).apply();showManageRoutines();});}
-        TextView section=text(activePeriod+" tasks",21,INK,true);section.setGravity(Gravity.START);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(14),0,dp(6));root.addView(section,sp);
+        LinearLayout periodRow=new LinearLayout(this);periodRow.setOrientation(0);periodRow.setGravity(Gravity.CENTER_VERTICAL);
+        for(String p:new String[]{"Morning","Evening","Night"}){
+            final String chosen=p;
+            Button periodButton=button(periodEmoji(p)+"  "+p,()->{activePeriod=chosen;routineType=chosen+" routine";prefs.edit().putString("active_period",activePeriod).putString("routine_type",routineType).apply();showManageRoutines();});
+            periodButton.setTextSize(13);periodButton.setPadding(dp(2),0,dp(2),0);
+            boolean selected=activePeriod.equals(p);periodButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(selected?INK:PALE));periodButton.setTextColor(selected?Color.WHITE:INK);
+            LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(0,dp(42),1);pp.setMargins(0,0,dp(6),0);periodRow.addView(periodButton,pp);
+        }
+        if(periodRow.getChildCount()>0)periodRow.getChildAt(periodRow.getChildCount()-1).setLayoutParams(new LinearLayout.LayoutParams(0,dp(42),1));
+        LinearLayout.LayoutParams periodGap=new LinearLayout.LayoutParams(-1,-2);periodGap.bottomMargin=dp(4);root.addView(periodRow,periodGap);
+        TextView section=text(activePeriod+" tasks",21,INK,true);section.setGravity(Gravity.START);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(8),0,dp(4));root.addView(section,sp);
         ArrayList<Task> visible=routineTasks();
         if(visible.isEmpty())addButton("No tasks yet — browse the library",this::showTaskLibrary);
-        for(int i=0;i<visible.size();i++){final int ix=globalTaskIndex(i);Task t=visible.get(i);addButton("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));}
+        for(int i=0;i<visible.size();i++){final int ix=globalTaskIndex(i);Task t=visible.get(i);Button taskRow=button("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));taskRow.setTextSize(14);taskRow.setPadding(dp(8),0,dp(8),0);LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,dp(2),0,dp(2));root.addView(taskRow,taskParams);}
         primary("+ Add task",this::showTaskLibrary);
         addButton("Restart routine progress",()->startNewRoutine());
         Button credits=button("♥  Credits",this::showCredits);credits.setTextSize(16);credits.setTextColor(Color.rgb(190,55,85));credits.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));
