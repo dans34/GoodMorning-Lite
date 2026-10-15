@@ -162,7 +162,7 @@ public class MainActivity extends Activity {
             Task t=visible.get(i);boolean completed=prefs.getBoolean(doneKey(t),false);
             Button taskRow=button((completed?"✓  ":"○  ")+(i+1)+".  "+t.name+"  ·  "+duration(t.seconds),()->Toast.makeText(this,"Use Manage Routines to edit tasks.",Toast.LENGTH_SHORT).show());
             taskRow.setTextSize(14);taskRow.setPadding(dp(8),0,dp(8),0);
-            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,dp(2),0,dp(2));root.addView(taskRow,taskParams);
+            LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,0,0,0);root.addView(taskRow,taskParams);
         }
         root.addView(new View(this),new LinearLayout.LayoutParams(1,dp(12)));
         primary("Start routine",()->{
@@ -228,7 +228,7 @@ public class MainActivity extends Activity {
             Button delete=button("🗑",()->new AlertDialog.Builder(this).setTitle("Delete task").setMessage("Delete “"+t.name+"” from your "+activePeriod.toLowerCase(Locale.ROOT)+" routine?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{String removedId=tasks.get(ix).id;tasks.remove(ix);prefs.edit().remove("done_"+removedId).apply();saveTasks();showManageRoutines();}).show());
             delete.setTextSize(17);delete.setContentDescription("Delete "+t.name);delete.setPadding(0,0,0,0);delete.setMinWidth(0);delete.setMinimumWidth(0);delete.setMinHeight(0);delete.setMinimumHeight(0);delete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));delete.setTextColor(Color.rgb(190,55,85));
             LinearLayout.LayoutParams deleteParams=new LinearLayout.LayoutParams(dp(42),dp(42));deleteParams.leftMargin=dp(6);taskLine.addView(delete,deleteParams);
-            LinearLayout.LayoutParams taskLineParams=new LinearLayout.LayoutParams(-1,-2);taskLineParams.setMargins(0,dp(2),0,dp(2));root.addView(taskLine,taskLineParams);
+            LinearLayout.LayoutParams taskLineParams=new LinearLayout.LayoutParams(-1,-2);taskLineParams.setMargins(0,0,0,0);root.addView(taskLine,taskLineParams);
         }
         primary("+ Add task",this::showTaskLibrary);
         addButton("Restart routine progress",()->startNewRoutine());
