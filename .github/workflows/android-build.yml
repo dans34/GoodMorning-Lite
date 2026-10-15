@@ -1,4 +1,4 @@
-name: Android debug build and screenshot
+name: Android debug build and UI smoke test
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        run: gradle assembleDebug
+        run: gradle --no-daemon assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -38,44 +38,73 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
-      - name: Launch app and collect emulator diagnostics
+      - name: Launch app and run UI smoke test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
           arch: x86_64
           profile: pixel_2
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 4096 -cores 2
           script: |
+            set -euo pipefail
             mkdir -p screenshots
-            echo "=== Emulator properties ===" > screenshots/android-anr-diagnostics.txt
-            adb shell getprop ro.build.version.release >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            adb shell getprop ro.build.version.sdk >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            adb shell getprop ro.product.model >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Boot completion ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell getprop sys.boot_completed >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Install ===" >> screenshots/android-anr-diagnostics.txt
-            adb install app/build/outputs/apk/debug/app-debug.apk >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Launch ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell am force-stop com.dans34.goodmorninglite >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            sleep 12
-            echo "=== App process ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell pidof com.dans34.goodmorninglite >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Activity processes ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell dumpsys activity processes >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Memory info ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell dumpsys meminfo >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Last ANR report ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell dumpsys activity lastanr >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== ANR trace directory listing ===" >> screenshots/android-anr-diagnostics.txt
-            adb shell ls -la /data/anr >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            echo "=== Focused ANR/system errors ===" >> screenshots/android-anr-diagnostics.txt
-            adb logcat -b all -d | grep -Ei 'ANR in|not responding|system_server|FATAL EXCEPTION|am_anr|Input dispatching timed out|Watchdog|lowmemorykiller|lmkd|com\.dans34\.goodmorninglite' | tail -n 600 >> screenshots/android-anr-diagnostics.txt 2>&1 || true
-            adb logcat -b all -d > screenshots/android-logcat-full.txt 2>&1 || true
-            adb shell dumpsys activity > screenshots/activity-dump.txt 2>&1 || true
-            adb shell dumpsys meminfo > screenshots/memory-dump.txt 2>&1 || true
-            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png 2> screenshots/screenshot-error.txt || true
-            test -s screenshots/goodmorning-lite-first-launch.png || echo "Screenshot capture failed; see screenshot-error.txt" >> screenshots/android-anr-diagnostics.txt
+            adb wait-for-device
+
+            # Wait for Android itself to finish booting before installing or launching.
+            booted=0
+            for attempt in $(seq 1 120); do
+              if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+                booted=1
+                break
+              fi
+              sleep 2
+            done
+            if [ "$booted" -ne 1 ]; then
+              adb logcat -d > screenshots/boot-failure-logcat.txt || true
+              echo "Emulator did not finish booting within 240 seconds." >&2
+              exit 1
+            fi
+
+            # Stabilise the first-launch state and disable animations for repeatable UI checks.
+            adb shell input keyevent 82 || true
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            adb shell pm clear com.dans34.goodmorninglite
+            adb install app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop com.dans34.goodmorninglite
+            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity | tee screenshots/launch-output.txt
+
+            # Wait for the app's first screen; don't mistake a successful install for a UI pass.
+            ui_ready=0
+            for attempt in $(seq 1 30); do
+              adb shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
+              adb pull /sdcard/window.xml screenshots/window.xml >/dev/null 2>&1 || true
+              if grep -qE 'Which routine should we build first\?|GoodMorning' screenshots/window.xml 2>/dev/null; then
+                ui_ready=1
+                break
+              fi
+              sleep 2
+            done
+
+            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png
+            test -s screenshots/goodmorning-lite-first-launch.png
+            adb logcat -b all -d > screenshots/android-logcat-full.txt
+            adb shell dumpsys activity processes > screenshots/activity-processes.txt
+            adb shell dumpsys meminfo > screenshots/memory-dump.txt
+            adb shell dumpsys activity lastanr > screenshots/last-anr.txt 2>&1 || true
+            adb shell dumpsys window windows > screenshots/window-dump.txt
+
+            if [ "$ui_ready" -ne 1 ]; then
+              echo "Expected onboarding/home UI was not found in the UI hierarchy." >&2
+              exit 1
+            fi
+            if grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\.dans34\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt; then
+              echo "System ANR dialog or app fatal exception detected." >&2
+              exit 1
+            fi
+            echo "UI smoke test passed: app launched and expected first screen is visible." | tee screenshots/smoke-test-result.txt
 
       - name: Upload emulator diagnostics and screenshot
         if: always()
