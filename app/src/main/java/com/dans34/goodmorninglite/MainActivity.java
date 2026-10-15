@@ -132,14 +132,24 @@ public class MainActivity extends Activity {
         header.addView(manage,manageParams);manage.setOnClickListener(v->showManageRoutines());root.addView(header);
         LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(22);header.setLayoutParams(headerGap);
         TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);
+        LinearLayout periodRow=new LinearLayout(this);periodRow.setOrientation(0);periodRow.setGravity(Gravity.CENTER_VERTICAL);
         for(String p:new String[]{"Morning","Evening","Night"}){
             final String chosen=p;
-            addButton((activePeriod.equals(p)?"✓  ":"")+periodEmoji(p)+"  "+p,()->{
+            Button periodButton=button(periodEmoji(p)+"  "+p,()->{
                 activePeriod=chosen; routineType=chosen+" routine";
                 prefs.edit().putString("active_period",activePeriod).putString("routine_type",routineType).apply();
                 showHome();
             });
+            periodButton.setTextSize(13);periodButton.setPadding(dp(2),0,dp(2),0);
+            boolean selected=activePeriod.equals(p);
+            periodButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(selected?INK:PALE));
+            periodButton.setTextColor(selected?Color.WHITE:INK);
+            LinearLayout.LayoutParams periodParams=new LinearLayout.LayoutParams(0,dp(46),1);
+            periodParams.setMargins(0,0,dp(6),0);
+            periodRow.addView(periodButton,periodParams);
         }
+        if(periodRow.getChildCount()>0){periodRow.getChildAt(periodRow.getChildCount()-1).setLayoutParams(new LinearLayout.LayoutParams(0,dp(46),1));}
+        LinearLayout.LayoutParams periodRowParams=new LinearLayout.LayoutParams(-1,-2);periodRowParams.bottomMargin=dp(10);root.addView(periodRow,periodRowParams);
         TextView rt=text(activePeriod+" routine",23,INK,true);rt.setGravity(Gravity.START);root.addView(rt);
         ArrayList<Task> visible=routineTasks();
         for(int i=0;i<visible.size();i++){
