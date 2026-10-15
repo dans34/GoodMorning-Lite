@@ -114,13 +114,13 @@ public class MainActivity extends Activity {
         managePageOpen=false;
         if(ticker!=null)handler.removeCallbacks(ticker);
         startScreen();
-        LinearLayout header=new LinearLayout(this);header.setOrientation(0);header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout header=new LinearLayout(this);header.setOrientation(0);header.setGravity(Gravity.TOP);
         LinearLayout titleBlock=new LinearLayout(this);titleBlock.setOrientation(1);
         TextView greeting=text(greetingForCurrentTime(),25,INK,true);greeting.setGravity(Gravity.START);
         TextView subtitle=text("Your routine, one step at a time.",15,MUTED,false);subtitle.setGravity(Gravity.START);
         titleBlock.addView(greeting);LinearLayout.LayoutParams subParams=new LinearLayout.LayoutParams(-1,-2);subParams.topMargin=dp(7);titleBlock.addView(subtitle,subParams);
         header.addView(titleBlock,new LinearLayout.LayoutParams(0,-2,1));
-        LinearLayout actions=new LinearLayout(this);actions.setOrientation(0);actions.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout actions=new LinearLayout(this);actions.setOrientation(0);actions.setGravity(Gravity.TOP);
         Button add=new Button(this);add.setText("+");add.setTextSize(24);add.setAllCaps(false);add.setTextColor(INK);
         add.setPadding(0,0,0,dp(3));add.setMinWidth(0);add.setMinimumWidth(0);add.setMinHeight(0);add.setMinimumHeight(0);
         add.setBackgroundTintList(android.content.res.ColorStateList.valueOf(YELLOW));
@@ -133,9 +133,9 @@ public class MainActivity extends Activity {
         actions.addView(manage,manageParams);manage.setOnClickListener(v->showManageRoutines());
         Button history=new Button(this);history.setText("📅");history.setTextSize(17);history.setAllCaps(false);history.setTextColor(INK);history.setContentDescription("History and streaks");history.setPadding(0,0,0,dp(2));history.setMinWidth(0);history.setMinimumWidth(0);history.setMinHeight(0);history.setMinimumHeight(0);history.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
         LinearLayout.LayoutParams historyParams=new LinearLayout.LayoutParams(dp(38),dp(38));historyParams.leftMargin=dp(4);actions.addView(history,historyParams);history.setOnClickListener(v->showHistory());
-        header.addView(actions,new LinearLayout.LayoutParams(-2,dp(42)));
+        LinearLayout.LayoutParams actionBlockParams=new LinearLayout.LayoutParams(-2,dp(42));actionBlockParams.topMargin=dp(1);header.addView(actions,actionBlockParams);
         root.addView(header);
-        LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(22);header.setLayoutParams(headerGap);
+        LinearLayout.LayoutParams headerGap=new LinearLayout.LayoutParams(-1,-2);headerGap.bottomMargin=dp(12);header.setLayoutParams(headerGap);
         TextView today=text("TODAY'S ROUTINE",13,MUTED,true);today.setGravity(Gravity.START);root.addView(today);
         LinearLayout periodRow=new LinearLayout(this);periodRow.setOrientation(0);periodRow.setGravity(Gravity.CENTER_VERTICAL);
         for(String p:new String[]{"Morning","Evening","Night"}){
