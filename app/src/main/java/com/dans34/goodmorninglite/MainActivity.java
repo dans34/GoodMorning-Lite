@@ -141,9 +141,9 @@ public class MainActivity extends Activity {
         for(String p:new String[]{"Morning","Evening","Night"}){final String chosen=p;addButton((activePeriod.equals(p)?"✓  ":"")+periodEmoji(p)+"  "+p,()->{activePeriod=chosen;routineType=chosen+" routine";prefs.edit().putString("active_period",activePeriod).putString("routine_type",routineType).apply();showManageRoutines();});}
         TextView section=text(activePeriod+" tasks",21,INK,true);section.setGravity(Gravity.START);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(14),0,dp(6));root.addView(section,sp);
         ArrayList<Task> visible=routineTasks();
-        if(visible.isEmpty())addButton("No tasks yet — add your first task",()->editTaskForPeriod(activePeriod));
+        if(visible.isEmpty())addButton("No tasks yet — browse the library",this::showTaskLibrary);
         for(int i=0;i<visible.size();i++){final int ix=globalTaskIndex(i);Task t=visible.get(i);addButton("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));}
-        primary("+ Add task",()->editTaskForPeriod(activePeriod));
+        primary("+ Add task",this::showTaskLibrary);
         addButton("Restart routine progress",()->startNewRoutine());
         addButton("‹ Back to home",this::showHome);
     }
