@@ -195,11 +195,11 @@ public class MainActivity extends Activity {
             taskRow.setOnLongClickListener(v->{android.content.ClipData data=android.content.ClipData.newPlainText("task_id",t.id);android.view.View.DragShadowBuilder shadow=new View.DragShadowBuilder(taskLine);taskLine.startDragAndDrop(data,shadow,t.id,0);return true;});
             taskLine.setOnDragListener((view,event)->{
                 switch(event.getAction()){
-                    case View.DRAG_STARTED:return event.getLocalState() instanceof String;
-                    case View.DRAG_ENTERED:view.setBackgroundColor(Color.rgb(255,248,190));return true;
-                    case View.DRAG_EXITED:view.setBackgroundColor(Color.TRANSPARENT);return true;
-                    case View.DRAG_ENDED:view.setBackgroundColor(Color.TRANSPARENT);return true;
-                    case View.DRAG_DROP:
+                    case android.view.DragEvent.ACTION_DRAG_STARTED:return event.getLocalState() instanceof String;
+                    case android.view.DragEvent.ACTION_DRAG_ENTERED:view.setBackgroundColor(Color.rgb(255,248,190));return true;
+                    case android.view.DragEvent.ACTION_DRAG_EXITED:view.setBackgroundColor(Color.TRANSPARENT);return true;
+                    case android.view.DragEvent.ACTION_DRAG_ENDED:view.setBackgroundColor(Color.TRANSPARENT);return true;
+                    case android.view.DragEvent.ACTION_DRAG_DROP:
                         String sourceId=(String)event.getLocalState();String targetId=(String)view.getTag();
                         if(sourceId.equals(targetId))return true;
                         int sourceIndex=globalTaskIndexForId(sourceId);int targetIndex=globalTaskIndexForId(targetId);
