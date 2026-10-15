@@ -1,5 +1,10 @@
 name: Android debug build and UI smoke test
 
+# Keep emulator runs serial while we diagnose each build/test result.
+concurrency:
+  group: goodmorning-lite-emulator-tests
+  cancel-in-progress: false
+
 on:
   push:
     branches: [ main ]
