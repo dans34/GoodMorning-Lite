@@ -55,57 +55,42 @@ jobs:
             set -eu
             mkdir -p screenshots
             adb wait-for-device
-
-            # The emulator-runner action already waits for boot. Give Android a short
-            # settling period, then verify the boot flag once rather than polling a
-            # potentially unresponsive system_server repeatedly.
             sleep 10
-            boot_state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
-            if [ "$boot_state" != "1" ]; then
-              adb logcat -d > screenshots/boot-failure-logcat.txt 2>&1 || true
-              echo "Android did not report sys.boot_completed=1 after emulator startup." >&2
-              exit 1
-            fi
 
-            # Stabilise the first-launch state and disable animations for repeatable UI checks.
+            # Record boot state, then continue collecting diagnostics even if startup failed.
+            boot_state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\\r' || true)"
+            printf 'sys.boot_completed=%s\n' "$boot_state" | tee screenshots/boot-state.txt
+
             adb shell input keyevent 82 || true
-            adb shell settings put global window_animation_scale 0
-            adb shell settings put global transition_animation_scale 0
-            adb shell settings put global animator_duration_scale 0
+            adb shell settings put global window_animation_scale 0 || true
+            adb shell settings put global transition_animation_scale 0 || true
+            adb shell settings put global animator_duration_scale 0 || true
             adb shell pm clear com.dans34.goodmorninglite
             adb install app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.dans34.goodmorninglite
-            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity | tee screenshots/launch-output.txt
+            adb shell am start -W -n com.dans34.goodmorninglite/.MainActivity > screenshots/launch-output.txt 2>&1 || true
 
-            # Wait for the app's first screen; don't mistake a successful install for a UI pass.
-            ui_ready=0
-            for attempt in $(seq 1 30); do
-              adb shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
-              adb pull /sdcard/window.xml screenshots/window.xml >/dev/null 2>&1 || true
-              if grep -qE 'Which routine should we build first\?|GoodMorning' screenshots/window.xml 2>/dev/null; then
-                ui_ready=1
-                break
-              fi
-              sleep 2
-            done
-
-            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png
-            test -s screenshots/goodmorning-lite-first-launch.png
-            adb logcat -b all -d > screenshots/android-logcat-full.txt
-            adb shell dumpsys activity processes > screenshots/activity-processes.txt
-            adb shell dumpsys meminfo > screenshots/memory-dump.txt
+            # Take one UI hierarchy snapshot after launch; keep the script POSIX-simple.
+            sleep 5
+            adb shell uiautomator dump /sdcard/window.xml > screenshots/uiautomator-output.txt 2>&1 || true
+            adb pull /sdcard/window.xml screenshots/window.xml > screenshots/adb-pull-output.txt 2>&1 || true
+            adb exec-out screencap -p > screenshots/goodmorning-lite-first-launch.png || true
+            adb logcat -b all -d > screenshots/android-logcat-full.txt 2>&1 || true
+            adb shell dumpsys activity processes > screenshots/activity-processes.txt 2>&1 || true
+            adb shell dumpsys meminfo > screenshots/memory-dump.txt 2>&1 || true
             adb shell dumpsys activity lastanr > screenshots/last-anr.txt 2>&1 || true
-            adb shell dumpsys window windows > screenshots/window-dump.txt
+            adb shell dumpsys window windows > screenshots/window-dump.txt 2>&1 || true
 
-            if [ "$ui_ready" -ne 1 ]; then
-              echo "Expected onboarding/home UI was not found in the UI hierarchy." >&2
-              exit 1
-            fi
-            if grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\.dans34\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt; then
-              echo "System ANR dialog or app fatal exception detected." >&2
-              exit 1
-            fi
-            echo "UI smoke test passed: app launched and expected first screen is visible." | tee screenshots/smoke-test-result.txt
+            # Write explicit result files before assertions so artifacts explain failures.
+            test "$boot_state" = "1" || echo "FAIL: Android boot flag was not 1." > screenshots/smoke-test-result.txt
+            grep -qE 'Which routine should we build first\\?|GoodMorning' screenshots/window.xml 2>/dev/null || echo "FAIL: Expected onboarding/home UI was not found." > screenshots/smoke-test-result.txt
+            grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\\.dans34\\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt && echo "FAIL: ANR dialog or app fatal exception detected." > screenshots/smoke-test-result.txt || true
+
+            test "$boot_state" = "1"
+            test -s screenshots/goodmorning-lite-first-launch.png
+            grep -qE 'Which routine should we build first\\?|GoodMorning' screenshots/window.xml
+            ! grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\\.dans34\\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt
+            echo "PASS: app launched and expected first screen is visible." > screenshots/smoke-test-result.txt
 
       - name: Upload emulator diagnostics and screenshot
         if: always()
