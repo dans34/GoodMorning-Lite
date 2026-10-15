@@ -500,29 +500,36 @@ public class MainActivity extends Activity {
         View content=findViewById(android.R.id.content);
         if(!(content instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
         ViewGroup host=(ViewGroup)content;
-        ConfettiBurst burst=new ConfettiBurst(grand);
-        if(origin!=null){
-            int[] location=new int[2];origin.getLocationOnScreen(location);
-            int[] hostLocation=new int[2];host.getLocationOnScreen(hostLocation);
-            burst.setBurstCenter(location[0]-hostLocation[0]+origin.getWidth()/2f,
-                location[1]-hostLocation[1]+origin.getHeight()/2f);
-        }else{
-            burst.setBurstCenter(host.getWidth()/2f,host.getHeight()*0.38f);
-        }
-        burst.setClickable(false);burst.setFocusable(false);
-        host.addView(burst,new ViewGroup.LayoutParams(-1,-1));
-        burst.bringToFront();
-        burst.setTranslationZ(dp(24));
-        long duration=grand?1250:850;
-        ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);animator.setDuration(duration);animator.setInterpolator(new DecelerateInterpolator());
-        animator.addUpdateListener(a->burst.setProgress((Float)a.getAnimatedValue()));
-        animator.addListener(new android.animation.AnimatorListenerAdapter(){
-            @Override public void onAnimationEnd(android.animation.Animator animation){
-                if(burst.getParent()==host)host.removeView(burst);
-                if(onFinished!=null&&!isFinishing()&&!isDestroyed())onFinished.run();
+        host.post(()->{
+            if(isFinishing()||isDestroyed()){if(onFinished!=null)onFinished.run();return;}
+            int width=host.getWidth(),height=host.getHeight();
+            if(width<=0||height<=0){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
+            ConfettiBurst burst=new ConfettiBurst(grand);
+            burst.layout(0,0,width,height);
+            if(origin!=null){
+                int[] location=new int[2];origin.getLocationOnScreen(location);
+                int[] hostLocation=new int[2];host.getLocationOnScreen(hostLocation);
+                burst.setBurstCenter(location[0]-hostLocation[0]+origin.getWidth()/2f,
+                    location[1]-hostLocation[1]+origin.getHeight()/2f);
+            }else{
+                burst.setBurstCenter(width/2f,height*0.38f);
             }
+            burst.setClickable(false);burst.setFocusable(false);
+            android.view.ViewGroupOverlay overlay=host.getOverlay();
+            overlay.add(burst);
+            burst.invalidate();
+            long duration=grand?1400:1000;
+            ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);animator.setDuration(duration);
+            animator.setInterpolator(new DecelerateInterpolator());
+            animator.addUpdateListener(a->{burst.setProgress((Float)a.getAnimatedValue());host.invalidate();});
+            animator.addListener(new android.animation.AnimatorListenerAdapter(){
+                @Override public void onAnimationEnd(android.animation.Animator animation){
+                    overlay.remove(burst);
+                    if(onFinished!=null&&!isFinishing()&&!isDestroyed())onFinished.run();
+                }
+            });
+            animator.start();
         });
-        animator.start();
     }
     private class ConfettiBurst extends View {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
