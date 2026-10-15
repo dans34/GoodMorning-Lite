@@ -58,7 +58,7 @@ jobs:
             sleep 10
 
             # Record boot state, then continue collecting diagnostics even if startup failed.
-            boot_state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\\r' || true)"
+            boot_state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
             printf 'sys.boot_completed=%s\n' "$boot_state" | tee screenshots/boot-state.txt
 
             adb shell input keyevent 82 || true
@@ -83,13 +83,13 @@ jobs:
 
             # Write explicit result files before assertions so artifacts explain failures.
             test "$boot_state" = "1" || echo "FAIL: Android boot flag was not 1." > screenshots/smoke-test-result.txt
-            grep -qE 'Which routine should we build first\\?|GoodMorning' screenshots/window.xml 2>/dev/null || echo "FAIL: Expected onboarding/home UI was not found." > screenshots/smoke-test-result.txt
-            grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\\.dans34\\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt && echo "FAIL: ANR dialog or app fatal exception detected." > screenshots/smoke-test-result.txt || true
+            grep -qE 'Which routine should we build first\?|GoodMorning' screenshots/window.xml 2>/dev/null || echo "FAIL: Expected onboarding/home UI was not found." > screenshots/smoke-test-result.txt
+            grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\.dans34\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt && echo "FAIL: ANR dialog or app fatal exception detected." > screenshots/smoke-test-result.txt || true
 
             test "$boot_state" = "1"
             test -s screenshots/goodmorning-lite-first-launch.png
-            grep -qE 'Which routine should we build first\\?|GoodMorning' screenshots/window.xml
-            ! grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\\.dans34\\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt
+            grep -qE 'Which routine should we build first\?|GoodMorning' screenshots/window.xml
+            ! grep -Eqi 'Process system isn.t responding|System UI isn.t responding|FATAL EXCEPTION.*com\.dans34\.goodmorninglite' screenshots/window.xml screenshots/android-logcat-full.txt
             echo "PASS: app launched and expected first screen is visible." > screenshots/smoke-test-result.txt
 
       - name: Upload emulator diagnostics and screenshot
