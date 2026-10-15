@@ -105,3 +105,10 @@
 - Finishing for now uses the existing completion summary and saves a partial session to local history; completed task flags are preserved.
 - Persisted the mode while the task timer is active so it survives ordinary activity recreation.
 - Source committed; Android Studio build and Nokia C12 behaviour still need user verification.
+
+## 2026-10-15 — Gentle consistency tracking
+
+- Added a rolling seven-day progress measure to History & streaks, counting calendar days with at least one completed task in a saved session.
+- Kept the existing full-completion streak unchanged; partial sessions contribute to consistency without being treated as fully completed routines.
+- Added supportive wording: “Every fresh start counts.”
+- Build and Nokia C12 behaviour still need user verification.
