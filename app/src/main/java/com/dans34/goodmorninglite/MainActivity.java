@@ -235,6 +235,13 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams periodGap=new LinearLayout.LayoutParams(-1,-2);periodGap.bottomMargin=dp(4);root.addView(periodRow,periodGap);
         TextView section=text(activePeriod+" tasks",21,INK,true);section.setGravity(Gravity.START);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(8),0,dp(4));root.addView(section,sp);
         ArrayList<Task> visible=routineTasks();
+        int totalSeconds=0;
+        for(Task task:visible)totalSeconds+=task.seconds;
+        TextView routineSummary=text(visible.size()+" "+(visible.size()==1?"task":"tasks")+"  ·  "+duration(totalSeconds)+" estimated",14,MUTED,false);
+        routineSummary.setGravity(Gravity.START);
+        LinearLayout.LayoutParams summaryParams=new LinearLayout.LayoutParams(-1,-2);
+        summaryParams.setMargins(0,0,0,dp(8));
+        root.addView(routineSummary,summaryParams);
         if(visible.isEmpty())addButton("No tasks yet — browse the library",this::showTaskLibrary);
         for(int i=0;i<visible.size();i++){
             final int ix=globalTaskIndex(i);Task t=visible.get(i);
