@@ -305,9 +305,9 @@ public class MainActivity extends Activity {
         String date=BuildConfig.BUILD_DATE==null?"unknown":BuildConfig.BUILD_DATE;
         String dirty=!BuildConfig.GIT_METADATA_KNOWN?"Unknown — Git metadata was unavailable during the build.":(BuildConfig.GIT_DIRTY?"Yes — this build included uncommitted local changes.":"No — the working tree was clean when built.");
         String message="Version: "+BuildConfig.VERSION_NAME+
-            "\\nBuild date: "+date+
-            "\\nFull commit: "+hash+
-            "\\nWorking tree: "+dirty;
+            "\nBuild date: "+date+
+            "\nFull commit: "+hash+
+            "\nWorking tree: "+dirty;
         AlertDialog dialog=new AlertDialog.Builder(this)
             .setTitle("Build information")
             .setMessage(message)
