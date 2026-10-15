@@ -497,8 +497,8 @@ public class MainActivity extends Activity {
         root.post(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);});
     }
     private void showConfetti(boolean grand,View origin,Runnable onFinished){
-        // Keep the animation inside the timer face itself; this avoids window,
-        // decor and content overlays entirely.
+        // ViewOverlay accepts Drawable objects, not Views. Draw the particles as
+        // a Drawable over the timer face so the Android API types match.
         if(origin==null){
             if(onFinished!=null)handler.postDelayed(onFinished,grand?1600:1200);
             return;
@@ -508,7 +508,7 @@ public class MainActivity extends Activity {
             int width=origin.getWidth(),height=origin.getHeight();
             if(width<=0||height<=0){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
             ConfettiBurst burst=new ConfettiBurst(grand);
-            burst.layout(0,0,width,height);
+            burst.setBounds(0,0,width,height);
             burst.setBurstCenter(width/2f,height/2f);
             android.view.ViewOverlay overlay=origin.getOverlay();
             overlay.add(burst);
@@ -527,7 +527,7 @@ public class MainActivity extends Activity {
             animator.start();
         });
     }
-    private class ConfettiBurst extends View {
+    private class ConfettiBurst extends android.graphics.drawable.Drawable {
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final int[] colors={Color.rgb(255,224,0),Color.rgb(255,119,145),Color.rgb(92,183,132),Color.rgb(104,164,235),Color.rgb(183,139,230),Color.rgb(255,255,255)};
         private final float[] angles;
@@ -535,15 +535,15 @@ public class MainActivity extends Activity {
         private final float[] sizes;
         private final int[] particleColors;
         private float centerX,centerY,progress;
-        ConfettiBurst(boolean grand){super(MainActivity.this);setLayerType(View.LAYER_TYPE_HARDWARE,null);
+        ConfettiBurst(boolean grand){
             int count=grand?112:54;
             angles=new float[count];speeds=new float[count];sizes=new float[count];particleColors=new int[count];
             java.util.Random random=new java.util.Random();
             for(int i=0;i<angles.length;i++){angles[i]=(float)(random.nextDouble()*Math.PI*2);speeds[i]=dp((grand?120:90)+random.nextInt(grand?240:190));sizes[i]=dp(3+random.nextInt(5));particleColors[i]=colors[random.nextInt(colors.length)];}
         }
-        void setBurstCenter(float x,float y){centerX=x;centerY=y;}
-        void setProgress(float p){progress=p;invalidate();}
-        @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);
+        void setBurstCenter(float x,float y){centerX=x;centerY=y;invalidateSelf();}
+        void setProgress(float p){progress=p;invalidateSelf();}
+        @Override public void draw(Canvas canvas){
             float gravity=dp(150)*progress*progress;
             for(int i=0;i<angles.length;i++){
                 float distance=speeds[i]*progress;
@@ -556,6 +556,9 @@ public class MainActivity extends Activity {
                 else canvas.drawCircle(x,y,size*0.65f,paint);
             }
         }
+        @Override public void setAlpha(int alpha){paint.setAlpha(alpha);}
+        @Override public void setColorFilter(android.graphics.ColorFilter colorFilter){paint.setColorFilter(colorFilter);}
+        @Override public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}
     }
 
     private void toggleTimer(){ArrayList<Task> list=routineTasks();if(list.isEmpty())return;if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}else{if(remainingMs<=0)remainingMs=list.get(currentTask).seconds*1000L;deadlineMs=System.currentTimeMillis()+remainingMs;timerRunning=true;}persistTimer();showTimer();}
