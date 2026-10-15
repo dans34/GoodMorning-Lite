@@ -190,8 +190,27 @@ public class MainActivity extends Activity {
         if(visible.isEmpty())addButton("No tasks yet — browse the library",this::showTaskLibrary);
         for(int i=0;i<visible.size();i++){
             final int ix=globalTaskIndex(i);Task t=visible.get(i);
-            LinearLayout taskLine=new LinearLayout(this);taskLine.setOrientation(0);taskLine.setGravity(Gravity.CENTER_VERTICAL);
-            Button taskRow=button("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));taskRow.setTextSize(14);taskRow.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);taskRow.setPadding(dp(8),0,dp(4),0);
+            LinearLayout taskLine=new LinearLayout(this);taskLine.setOrientation(0);taskLine.setGravity(Gravity.CENTER_VERTICAL);taskLine.setTag(t.id);
+            Button taskRow=button("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(globalTaskIndexForId(t.id)));taskRow.setTextSize(14);taskRow.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);taskRow.setPadding(dp(8),0,dp(4),0);
+            taskRow.setOnLongClickListener(v->{android.content.ClipData data=android.content.ClipData.newPlainText("task_id",t.id);android.view.View.DragShadowBuilder shadow=new View.DragShadowBuilder(taskLine);taskLine.startDragAndDrop(data,shadow,t.id,0);return true;});
+            taskLine.setOnDragListener((view,event)->{
+                switch(event.getAction()){
+                    case View.DRAG_STARTED:return event.getLocalState() instanceof String;
+                    case View.DRAG_ENTERED:view.setBackgroundColor(Color.rgb(255,248,190));return true;
+                    case View.DRAG_EXITED:view.setBackgroundColor(Color.TRANSPARENT);return true;
+                    case View.DRAG_ENDED:view.setBackgroundColor(Color.TRANSPARENT);return true;
+                    case View.DRAG_DROP:
+                        String sourceId=(String)event.getLocalState();String targetId=(String)view.getTag();
+                        if(sourceId.equals(targetId))return true;
+                        int sourceIndex=globalTaskIndexForId(sourceId);int targetIndex=globalTaskIndexForId(targetId);
+                        if(sourceIndex<0||targetIndex<0)return false;
+                        Task moving=tasks.get(sourceIndex);if(!moving.period.equals(activePeriod)||!tasks.get(targetIndex).period.equals(activePeriod))return false;
+                        tasks.remove(sourceIndex);targetIndex=globalTaskIndexForId(targetId);
+                        if(targetIndex<0)targetIndex=tasks.size();
+                        tasks.add(targetIndex,moving);saveTasks();showManageRoutines();return true;
+                }
+                return true;
+            });
             taskLine.addView(taskRow,new LinearLayout.LayoutParams(0,dp(42),1));
             Button delete=button("🗑",()->new AlertDialog.Builder(this).setTitle("Delete task").setMessage("Delete “"+t.name+"” from your "+activePeriod.toLowerCase(Locale.ROOT)+" routine?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{String removedId=tasks.get(ix).id;tasks.remove(ix);prefs.edit().remove("done_"+removedId).apply();saveTasks();showManageRoutines();}).show());
             delete.setTextSize(17);delete.setContentDescription("Delete "+t.name);delete.setPadding(0,0,0,0);delete.setMinWidth(0);delete.setMinimumWidth(0);delete.setMinHeight(0);delete.setMinimumHeight(0);delete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));delete.setTextColor(Color.rgb(190,55,85));
@@ -204,6 +223,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams creditParams=new LinearLayout.LayoutParams(-1,dp(48));creditParams.setMargins(0,dp(12),0,dp(4));root.addView(credits,creditParams);
         addButton("‹ Back to home",this::showHome);
     }
+    private int globalTaskIndexForId(String id){for(int i=0;i<tasks.size();i++)if(tasks.get(i).id.equals(id))return i;return -1;}
     private void showCredits(){
         startScreen();root.setGravity(Gravity.CENTER);
         TextView heart=text("♥",64,Color.rgb(220,65,100),true);
