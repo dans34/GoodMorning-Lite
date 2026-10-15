@@ -5,6 +5,10 @@
 - Updated the Credits Easter egg with the dedication “My dearest Ronni, You are my partner, my world & my future.”
 - Preserved the remainder of the existing message.
 
+## 2026-10-15 — Easter egg wording correction
+
+- Corrected “oodies of love” to “oodles of love.”
+
 ## 2026-10-14 — Initial repository documentation
 
 - Added README with project goals, status, scope and milestones.
