@@ -477,8 +477,9 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable flash=new android.graphics.drawable.GradientDrawable();
         flash.setShape(android.graphics.drawable.GradientDrawable.OVAL);flash.setColor(YELLOW);
         timerFace.setBackground(flash);
-        ValueAnimator pop=ValueAnimator.ofFloat(1f,1.10f,0.97f,1f);
-        pop.setDuration(360);pop.setInterpolator(new DecelerateInterpolator());
+        timerFace.setPivotX(timerFace.getWidth()/2f);timerFace.setPivotY(timerFace.getHeight()/2f);
+        ValueAnimator pop=ValueAnimator.ofFloat(1f,1.14f,0.94f,1.03f,1f);
+        pop.setDuration(480);pop.setInterpolator(new DecelerateInterpolator());
         pop.addUpdateListener(a->{float scale=(Float)a.getAnimatedValue();timerFace.setScaleX(scale);timerFace.setScaleY(scale);});
         pop.addListener(new android.animation.AnimatorListenerAdapter(){
             @Override public void onAnimationEnd(android.animation.Animator animation){
@@ -496,13 +497,13 @@ public class MainActivity extends Activity {
         root.post(()->{if(!isFinishing()&&!isDestroyed())showConfetti(true,null,null);});
     }
     private void showConfetti(boolean grand,View origin,Runnable onFinished){
-        View decor=getWindow().getDecorView();
-        if(!(decor instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
-        ViewGroup host=(ViewGroup)decor;
+        View content=findViewById(android.R.id.content);
+        if(!(content instanceof ViewGroup)){if(onFinished!=null)handler.postDelayed(onFinished,500);return;}
+        ViewGroup host=(ViewGroup)content;
         ConfettiBurst burst=new ConfettiBurst(grand);
-        int[] hostLocation=new int[2];host.getLocationOnScreen(hostLocation);
         if(origin!=null){
             int[] location=new int[2];origin.getLocationOnScreen(location);
+            int[] hostLocation=new int[2];host.getLocationOnScreen(hostLocation);
             burst.setBurstCenter(location[0]-hostLocation[0]+origin.getWidth()/2f,
                 location[1]-hostLocation[1]+origin.getHeight()/2f);
         }else{
@@ -511,7 +512,8 @@ public class MainActivity extends Activity {
         burst.setClickable(false);burst.setFocusable(false);
         host.addView(burst,new ViewGroup.LayoutParams(-1,-1));
         burst.bringToFront();
-        long duration=grand?1250:700;
+        burst.setTranslationZ(dp(24));
+        long duration=grand?1250:850;
         ValueAnimator animator=ValueAnimator.ofFloat(0f,1f);animator.setDuration(duration);animator.setInterpolator(new DecelerateInterpolator());
         animator.addUpdateListener(a->burst.setProgress((Float)a.getAnimatedValue()));
         animator.addListener(new android.animation.AnimatorListenerAdapter(){
