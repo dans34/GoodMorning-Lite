@@ -188,7 +188,16 @@ public class MainActivity extends Activity {
         TextView section=text(activePeriod+" tasks",21,INK,true);section.setGravity(Gravity.START);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(8),0,dp(4));root.addView(section,sp);
         ArrayList<Task> visible=routineTasks();
         if(visible.isEmpty())addButton("No tasks yet — browse the library",this::showTaskLibrary);
-        for(int i=0;i<visible.size();i++){final int ix=globalTaskIndex(i);Task t=visible.get(i);Button taskRow=button("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));taskRow.setTextSize(14);taskRow.setPadding(dp(8),0,dp(8),0);LinearLayout.LayoutParams taskParams=new LinearLayout.LayoutParams(-1,dp(42));taskParams.setMargins(0,dp(2),0,dp(2));root.addView(taskRow,taskParams);}
+        for(int i=0;i<visible.size();i++){
+            final int ix=globalTaskIndex(i);Task t=visible.get(i);
+            LinearLayout taskLine=new LinearLayout(this);taskLine.setOrientation(0);taskLine.setGravity(Gravity.CENTER_VERTICAL);
+            Button taskRow=button("✏️  "+t.name+"  ·  "+duration(t.seconds)+"  ›",()->taskActions(ix));taskRow.setTextSize(14);taskRow.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);taskRow.setPadding(dp(8),0,dp(4),0);
+            taskLine.addView(taskRow,new LinearLayout.LayoutParams(0,dp(42),1));
+            Button delete=button("🗑",()->new AlertDialog.Builder(this).setTitle("Delete task").setMessage("Delete “"+t.name+"” from your "+activePeriod.toLowerCase(Locale.ROOT)+" routine?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{String removedId=tasks.get(ix).id;tasks.remove(ix);prefs.edit().remove("done_"+removedId).apply();saveTasks();showManageRoutines();}).show());
+            delete.setTextSize(17);delete.setContentDescription("Delete "+t.name);delete.setPadding(0,0,0,0);delete.setMinWidth(0);delete.setMinimumWidth(0);delete.setMinHeight(0);delete.setMinimumHeight(0);delete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));delete.setTextColor(Color.rgb(190,55,85));
+            LinearLayout.LayoutParams deleteParams=new LinearLayout.LayoutParams(dp(42),dp(42));deleteParams.leftMargin=dp(6);taskLine.addView(delete,deleteParams);
+            LinearLayout.LayoutParams taskLineParams=new LinearLayout.LayoutParams(-1,-2);taskLineParams.setMargins(0,dp(2),0,dp(2));root.addView(taskLine,taskLineParams);
+        }
         primary("+ Add task",this::showTaskLibrary);
         addButton("Restart routine progress",()->startNewRoutine());
         Button credits=button("♥  Credits",this::showCredits);credits.setTextSize(16);credits.setTextColor(Color.rgb(190,55,85));credits.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));
