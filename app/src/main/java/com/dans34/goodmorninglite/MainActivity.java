@@ -302,7 +302,7 @@ public class MainActivity extends Activity {
                 return true;
             });
             taskLine.addView(taskRow,new LinearLayout.LayoutParams(0,dp(42),1));
-            Button delete=button("🗑",()->new AlertDialog.Builder(this).setTitle("Delete task").setMessage("Delete “"+t.name+"” from your "+activePeriod.toLowerCase(Locale.ROOT)+" routine?").setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{String removedId=tasks.get(ix).id;tasks.remove(ix);prefs.edit().remove("done_"+removedId).apply();saveTasks();showManageRoutines();}).show());
+            Button delete=button("🗑",()->showStyledConfirmation("🗑","Delete task","Delete “"+t.name+"” from your "+activePeriod.toLowerCase(Locale.ROOT)+" routine?","Cancel","Delete",true,()->{int removeIndex=tasks.indexOf(t);if(removeIndex>=0){String removedId=tasks.get(removeIndex).id;tasks.remove(removeIndex);prefs.edit().remove("done_"+removedId).apply();saveTasks();showManageRoutines();}}));
             delete.setTextSize(17);delete.setContentDescription("Delete "+t.name);delete.setPadding(0,0,0,0);delete.setMinWidth(0);delete.setMinimumWidth(0);delete.setMinHeight(0);delete.setMinimumHeight(0);delete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));delete.setTextColor(Color.rgb(190,55,85));
             LinearLayout.LayoutParams deleteParams=new LinearLayout.LayoutParams(dp(42),dp(42));deleteParams.leftMargin=dp(6);taskLine.addView(delete,deleteParams);
             LinearLayout.LayoutParams taskLineParams=new LinearLayout.LayoutParams(-1,-2);taskLineParams.setMargins(0,0,0,0);root.addView(taskLine,taskLineParams);
@@ -878,7 +878,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams completeParams=new LinearLayout.LayoutParams(controlSize,controlSize);completeParams.setMargins(dp(4),0,dp(4),0);controls.addView(complete,completeParams);
         Button skip=button("⏭",()->{Toast.makeText(this,"Task skipped",Toast.LENGTH_SHORT).show();nextTask();});skip.setTextSize(23);skip.setTextColor(MUTED);skip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));skip.setMinWidth(0);skip.setMinimumWidth(0);skip.setContentDescription("Skip task");
         LinearLayout.LayoutParams skipParams=new LinearLayout.LayoutParams(controlSize,controlSize);skipParams.setMargins(dp(4),0,dp(4),0);controls.addView(skip,skipParams);
-        Button end=button("■",()->new AlertDialog.Builder(this).setTitle("End routine?").setMessage("Are you sure you want to end this routine? Your completed tasks will be kept.").setNegativeButton("Keep going",null).setPositiveButton("End routine",(dialog,which)->{stopTimer();singleTaskMode=false;prefs.edit().putBoolean("single_task_mode",false).putBoolean("timer_screen_active",false).apply();showHome();}).show());end.setTextSize(20);end.setTextColor(Color.rgb(190,55,85));end.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));end.setMinWidth(0);end.setMinimumWidth(0);end.setContentDescription("End routine");
+        Button end=button("■",()->showStyledConfirmation("■","End routine?","Your completed tasks will be kept. You can come back to this routine whenever you’re ready.","Keep going","End routine",true,()->{stopTimer();singleTaskMode=false;prefs.edit().putBoolean("single_task_mode",false).putBoolean("timer_screen_active",false).apply();showHome();}));end.setTextSize(20);end.setTextColor(Color.rgb(190,55,85));end.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255,241,245)));end.setMinWidth(0);end.setMinimumWidth(0);end.setContentDescription("End routine");
         LinearLayout.LayoutParams endParams=new LinearLayout.LayoutParams(controlSize,controlSize);endParams.setMargins(dp(4),0,dp(4),0);controls.addView(end,endParams);
         if(timerRunning)runTicker();
     }
@@ -897,6 +897,65 @@ public class MainActivity extends Activity {
         prefs.edit().putBoolean("single_task_mode",singleTaskMode).putBoolean("timer_screen_active",true).putLong("routine_start_time",started).putString("routine_session_saved_id","").apply();
         persistTimer();
         showTimer();
+    }
+
+    private void showStyledConfirmation(String icon,String titleText,String messageText,String cancelLabel,String confirmLabel,boolean destructive,Runnable onConfirm){
+        Dialog dialog=new Dialog(this);
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(1);
+        panel.setPadding(dp(22),dp(22),dp(22),dp(18));
+        android.graphics.drawable.GradientDrawable panelBg=new android.graphics.drawable.GradientDrawable();
+        panelBg.setColor(Color.WHITE);
+        panelBg.setCornerRadius(dp(22));
+        panel.setBackground(panelBg);
+
+        LinearLayout iconBox=new LinearLayout(this);
+        iconBox.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable iconBg=new android.graphics.drawable.GradientDrawable();
+        iconBg.setColor(destructive?Color.rgb(255,241,245):Color.rgb(233,238,255));
+        iconBg.setCornerRadius(dp(14));
+        iconBox.setBackground(iconBg);
+        iconBox.addView(text(icon,25,destructive?Color.rgb(190,55,85):Color.rgb(64,89,169),true));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(52),dp(52));
+        iconParams.gravity=Gravity.CENTER_HORIZONTAL;
+        iconParams.bottomMargin=dp(14);
+        panel.addView(iconBox,iconParams);
+
+        TextView title=text(titleText,21,INK,true);
+        LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(-1,-2);
+        titleParams.bottomMargin=dp(7);
+        panel.addView(title,titleParams);
+        TextView message=text(messageText,14,MUTED,false);
+        message.setLineSpacing(dp(2),1f);
+        LinearLayout.LayoutParams messageParams=new LinearLayout.LayoutParams(-1,-2);
+        messageParams.bottomMargin=dp(18);
+        panel.addView(message,messageParams);
+
+        Button cancel=button(cancelLabel,()->dialog.dismiss());
+        cancel.setMinHeight(dp(46));
+        LinearLayout.LayoutParams cancelParams=new LinearLayout.LayoutParams(-1,dp(46));
+        cancelParams.bottomMargin=dp(8);
+        panel.addView(cancel,cancelParams);
+
+        Button confirm=button(confirmLabel,()->{
+            dialog.dismiss();
+            onConfirm.run();
+        });
+        confirm.setMinHeight(dp(50));
+        confirm.setTextSize(15);
+        confirm.setTextColor(Color.WHITE);
+        confirm.setBackgroundTintList(android.content.res.ColorStateList.valueOf(destructive?Color.rgb(190,55,85):INK));
+        panel.addView(confirm,new LinearLayout.LayoutParams(-1,dp(50)));
+
+        dialog.setContentView(panel);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        android.view.Window window=dialog.getWindow();
+        if(window!=null){
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(Math.min(dp(340),getResources().getDisplayMetrics().widthPixels-dp(32)),-2);
+        }
     }
 
     private void showJustStartedChoice(){
