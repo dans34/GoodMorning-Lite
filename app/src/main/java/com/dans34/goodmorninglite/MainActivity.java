@@ -91,7 +91,7 @@ public class MainActivity extends Activity {
         if(countdownView!=null)countdownView.setText(formatTime(remainingMs));
         if(pauseButton!=null)pauseButton.setText("Resume");
     }
-    @Override protected void onDestroy(){if(ticker!=null)handler.removeCallbacks(ticker);super.onDestroy();}
+    @Override protected void onDestroy(){if(ticker!=null)handler.removeCallbacks(ticker);if(greetingUpdater!=null)handler.removeCallbacks(greetingUpdater);super.onDestroy();}
     private int dp(float v){return (int)(v*getResources().getDisplayMetrics().density+0.5f);}
     private TextView text(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setGravity(Gravity.CENTER);if(bold)t.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));return t;}
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(1);l.setPadding(dp(22),dp(16),dp(22),dp(16));return l;}
