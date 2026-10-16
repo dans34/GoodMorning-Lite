@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Clear blue morning sky -->
+    <path
+        android:fillColor="#65B5F7"
+        android:pathData="M0,0 H108 V108 H0 Z" />
+
+    <!-- Warm sunrise rays -->
+    <path
+        android:fillColor="#FFE17A"
+        android:pathData="M51,15 Q51,12 54,12 Q57,12 57,15 V27 Q57,30 54,30 Q51,30 51,27 Z" />
+    <path
+        android:fillColor="#FFE17A"
+        android:pathData="M27.5,28.5 Q25,26 27.5,23.5 Q30,21 32.5,23.5 L40.5,31.5 Q43,34 40.5,36.5 Q38,39 35.5,36.5 Z" />
+    <path
+        android:fillColor="#FFE17A"
+        android:pathData="M80.5,23.5 Q83,21 85.5,23.5 Q88,26 85.5,28.5 L77.5,36.5 Q75,39 72.5,36.5 Q70,34 72.5,31.5 Z" />
+    <path
+        android:fillColor="#FFE17A"
+        android:pathData="M13,50 Q10,50 10,53 Q10,56 13,56 H25 Q28,56 28,53 Q28,50 25,50 Z" />
+    <path
+        android:fillColor="#FFE17A"
+        android:pathData="M83,50 Q80,50 80,53 Q80,56 83,56 H95 Q98,56 98,53 Q98,50 95,50 Z" />
+
+    <!-- Rising sun -->
+    <path
+        android:fillColor="#FFD34F"
+        android:pathData="M31,67 A23,23 0,0 1,77 67 Z" />
+
+    <!-- Distant green hill -->
+    <path
+        android:fillColor="#9BD67A"
+        android:pathData="M0,70 Q24,61 47,73 Q75,58 108,67 V108 H0 Z" />
+
+    <!-- Foreground hill -->
+    <path
+        android:fillColor="#178B75"
+        android:pathData="M0,79 Q22,70 48,81 Q76,94 108,91 V108 H0 Z" />
+</vector>
