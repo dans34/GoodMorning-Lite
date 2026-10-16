@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-16 — Time-based greeting schedule refined
+
+- Kept the three routine categories unchanged: Morning, Evening and Night.
+- Set the greeting schedule to Good Morning (05:00–11:59), Good Afternoon (12:00–16:59), Good Evening (17:00–20:59) and Good Night (21:00–04:59), using the device's local time.
+- Refresh the greeting when the app resumes and every minute while the home screen remains visible, so time-boundary changes are reflected without reopening the app.
+
+
 ## 2026-10-15 — Easter egg dedication updated
 
 - Updated the Credits Easter egg with the dedication “My dearest Ronni, You are my partner, my world & my future.”
