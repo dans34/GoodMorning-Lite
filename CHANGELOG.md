@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-16 — Bedtime routine templates and individual task previews
+
+- Added four optional routine templates: Get Ready for Bed, Make Tomorrow Easier, Clear Your Mind, and Final Bedtime Steps.
+- Kept the existing Gentle Morning, Ready to Focus, Wind Down, and Ready to Leave templates unchanged.
+- Expanded the individual task library to include tasks from all routine templates, while showing duplicate task names only once.
+- Updated task category tabs dynamically so categories used by template tasks are available in the library.
+- Selecting a library task now opens a styled preview showing its emoji, name, category, suggested duration and description.
+- Added Cancel and Add task actions to the preview; a task is added to the selected routine only after confirmation.
+- Added tasks retain their suggested duration, notes and emoji and remain editable using the existing task editor.
+- Added a sunrise launcher icon and configured the Android manifest to use it; the icon has been installed and confirmed working on the Nokia C12.
+- Polished the task editor, duration stepper, encouragement dialog, template preview, delete/end confirmations and routine selector in the preceding UI updates.
+- Source changes are committed; the latest individual-task preview and template-library changes still require a fresh Android build and user verification on the Nokia C12.
+
 ## 2026-10-16 — Time-based greeting schedule refined
 
 - Kept the three routine categories unchanged: Morning, Evening and Night.
