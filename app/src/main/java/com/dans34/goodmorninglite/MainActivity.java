@@ -516,14 +516,136 @@ public class MainActivity extends Activity {
         addButton("‹ Back to task library",this::showTaskLibrary);
     }
     private void previewRoutineTemplate(RoutineTemplate template){
-        StringBuilder details=new StringBuilder(template.description).append("\n\n");
-        for(LibraryTask item:template.items)details.append(item.emoji).append("  ").append(item.name).append(" — ").append(item.minutes).append(" min\n").append("    ").append(item.description).append("\n");
-        details.append("\nTotal: ").append(template.totalMinutes()).append(" minutes");
-        new AlertDialog.Builder(this).setTitle(template.emoji+"  "+template.name).setMessage(details.toString())
-            .setNegativeButton("Back",null)
-            .setPositiveButton("Add to "+activePeriod,(dialog,which)->addRoutineTemplate(template))
-            .show();
+        Dialog dialog=new Dialog(this);
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(1);
+        panel.setPadding(dp(20),dp(18),dp(20),dp(18));
+        android.graphics.drawable.GradientDrawable panelBg=new android.graphics.drawable.GradientDrawable();
+        panelBg.setColor(Color.WHITE);
+        panelBg.setCornerRadius(dp(22));
+        panel.setBackground(panelBg);
+
+        LinearLayout header=new LinearLayout(this);
+        header.setOrientation(0);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout iconBox=new LinearLayout(this);
+        iconBox.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable iconBg=new android.graphics.drawable.GradientDrawable();
+        iconBg.setColor(Color.rgb(233,238,255));
+        iconBg.setCornerRadius(dp(12));
+        iconBox.setBackground(iconBg);
+        iconBox.addView(text(template.emoji,25,INK,false));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(48),dp(48));
+        iconParams.rightMargin=dp(12);
+        header.addView(iconBox,iconParams);
+
+        LinearLayout titleGroup=new LinearLayout(this);
+        titleGroup.setOrientation(1);
+        TextView title=text(template.name,20,INK,true);
+        title.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+        TextView subtitle=text(template.items.length+" tasks · "+template.totalMinutes()+" min",13,MUTED,true);
+        subtitle.setGravity(Gravity.START);
+        LinearLayout.LayoutParams subtitleParams=new LinearLayout.LayoutParams(-1,-2);
+        subtitleParams.topMargin=dp(3);
+        titleGroup.addView(title);
+        titleGroup.addView(subtitle,subtitleParams);
+        header.addView(titleGroup,new LinearLayout.LayoutParams(0,-2,1));
+        panel.addView(header);
+
+        TextView description=text(template.description,14,MUTED,false);
+        description.setGravity(Gravity.START);
+        description.setLineSpacing(dp(2),1f);
+        LinearLayout.LayoutParams descriptionParams=new LinearLayout.LayoutParams(-1,-2);
+        descriptionParams.topMargin=dp(14);
+        descriptionParams.bottomMargin=dp(10);
+        panel.addView(description,descriptionParams);
+
+        ScrollView taskScroll=new ScrollView(this);
+        taskScroll.setFillViewport(false);
+        taskScroll.setVerticalScrollBarEnabled(false);
+        LinearLayout taskList=new LinearLayout(this);
+        taskList.setOrientation(1);
+        for(int i=0;i<template.items.length;i++){
+            LibraryTask item=template.items[i];
+            LinearLayout row=new LinearLayout(this);
+            row.setOrientation(0);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(10),dp(9),dp(10),dp(9));
+            android.graphics.drawable.GradientDrawable rowBg=new android.graphics.drawable.GradientDrawable();
+            rowBg.setColor(PALE);
+            rowBg.setCornerRadius(dp(12));
+            row.setBackground(rowBg);
+
+            TextView taskIcon=text(item.emoji,22,INK,false);
+            row.addView(taskIcon,new LinearLayout.LayoutParams(dp(36),dp(36)));
+            LinearLayout details=new LinearLayout(this);
+            details.setOrientation(1);
+            TextView taskName=text(item.name,14,INK,true);
+            taskName.setGravity(Gravity.START);
+            TextView taskDescription=text(item.description,12,MUTED,false);
+            taskDescription.setGravity(Gravity.START);
+            taskDescription.setLineSpacing(dp(1),1f);
+            LinearLayout.LayoutParams taskDescriptionParams=new LinearLayout.LayoutParams(-1,-2);
+            taskDescriptionParams.topMargin=dp(2);
+            details.addView(taskName);
+            details.addView(taskDescription,taskDescriptionParams);
+            LinearLayout.LayoutParams detailsParams=new LinearLayout.LayoutParams(0,-2,1);
+            detailsParams.leftMargin=dp(6);
+            row.addView(details,detailsParams);
+            TextView minutes=text(item.minutes+" min",12,INK,true);
+            LinearLayout.LayoutParams minutesParams=new LinearLayout.LayoutParams(-2,-2);
+            minutesParams.leftMargin=dp(6);
+            row.addView(minutes,minutesParams);
+            LinearLayout.LayoutParams rowParams=new LinearLayout.LayoutParams(-1,-2);
+            rowParams.bottomMargin=dp(6);
+            taskList.addView(row,rowParams);
+        }
+        taskScroll.addView(taskList);
+        LinearLayout.LayoutParams scrollParams=new LinearLayout.LayoutParams(-1,Math.min(dp(300),dp(88)*template.items.length));
+        panel.addView(taskScroll,scrollParams);
+
+        LinearLayout totalRow=new LinearLayout(this);
+        totalRow.setOrientation(0);
+        totalRow.setGravity(Gravity.CENTER_VERTICAL);
+        totalRow.setPadding(dp(12),dp(11),dp(12),dp(11));
+        android.graphics.drawable.GradientDrawable totalBg=new android.graphics.drawable.GradientDrawable();
+        totalBg.setColor(Color.rgb(255,248,210));
+        totalBg.setCornerRadius(dp(12));
+        totalRow.setBackground(totalBg);
+        TextView totalLabel=text("Estimated total",14,INK,false);
+        totalLabel.setGravity(Gravity.START);
+        totalRow.addView(totalLabel,new LinearLayout.LayoutParams(0,-2,1));
+        totalRow.addView(text(template.totalMinutes()+" minutes",15,INK,true));
+        LinearLayout.LayoutParams totalParams=new LinearLayout.LayoutParams(-1,-2);
+        totalParams.topMargin=dp(4);
+        totalParams.bottomMargin=dp(14);
+        panel.addView(totalRow,totalParams);
+
+        Button back=button("Back",()->dialog.dismiss());
+        back.setMinHeight(dp(46));
+        LinearLayout.LayoutParams backParams=new LinearLayout.LayoutParams(-1,dp(46));
+        backParams.bottomMargin=dp(8);
+        panel.addView(back,backParams);
+        Button add=button("Add to "+activePeriod+" routine",()->{
+            dialog.dismiss();
+            addRoutineTemplate(template);
+        });
+        add.setTextColor(Color.WHITE);
+        add.setTextSize(15);
+        add.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));
+        panel.addView(add,new LinearLayout.LayoutParams(-1,dp(50)));
+
+        dialog.setContentView(panel);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        android.view.Window window=dialog.getWindow();
+        if(window!=null){
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(Math.min(dp(360),getResources().getDisplayMetrics().widthPixels-dp(32)),-2);
+        }
     }
+
     private void addRoutineTemplate(RoutineTemplate template){
         for(LibraryTask item:template.items){
             Task added=new Task(item.name,item.minutes*60,item.description,activePeriod);
