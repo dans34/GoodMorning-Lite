@@ -2,6 +2,7 @@ package com.dans34.goodmorninglite;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -779,17 +780,71 @@ public class MainActivity extends Activity {
     private void showJustStartedChoice(){
         stopTimer();
         persistTimer();
-        new AlertDialog.Builder(this)
-            .setTitle("Nice work!")
-            .setMessage("You've completed one task. Would you like to continue your routine, or finish for now?")
-            .setNegativeButton("Finish for now",(dialog,which)->{
-                singleTaskMode=false;
-                routineFinished=true;
-                prefs.edit().putBoolean("single_task_mode",false).putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();
-                showCompletion();
-            })
-            .setPositiveButton("Continue routine",(dialog,which)->continueRoutineAfterFirstTask())
-            .show();
+
+        Dialog dialog=new Dialog(this);
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(1);
+        panel.setPadding(dp(22),dp(22),dp(22),dp(18));
+        android.graphics.drawable.GradientDrawable panelBg=new android.graphics.drawable.GradientDrawable();
+        panelBg.setColor(Color.WHITE);
+        panelBg.setCornerRadius(dp(22));
+        panel.setBackground(panelBg);
+
+        LinearLayout iconBox=new LinearLayout(this);
+        iconBox.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable iconBg=new android.graphics.drawable.GradientDrawable();
+        iconBg.setColor(Color.rgb(233,238,255));
+        iconBg.setCornerRadius(dp(16));
+        iconBox.setBackground(iconBg);
+        iconBox.addView(text("✨",28,Color.rgb(64,89,169),true));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(58),dp(58));
+        iconParams.gravity=Gravity.CENTER_HORIZONTAL;
+        iconParams.bottomMargin=dp(14);
+        panel.addView(iconBox,iconParams);
+
+        TextView title=text("Nice work!",23,INK,true);
+        LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(-1,-2);
+        titleParams.bottomMargin=dp(7);
+        panel.addView(title,titleParams);
+        TextView message=text("You've completed one task. That counts. Would you like to continue your routine, or finish for now?",15,MUTED,false);
+        message.setGravity(Gravity.CENTER);
+        message.setLineSpacing(dp(2),1f);
+        LinearLayout.LayoutParams messageParams=new LinearLayout.LayoutParams(-1,-2);
+        messageParams.bottomMargin=dp(18);
+        panel.addView(message,messageParams);
+
+        Button finish=button("Finish for now",()->{
+            dialog.dismiss();
+            singleTaskMode=false;
+            routineFinished=true;
+            prefs.edit().putBoolean("single_task_mode",false).putBoolean("routine_finished",true).putBoolean("timer_screen_active",false).putLong("last_completion_time",System.currentTimeMillis()).apply();
+            showCompletion();
+        });
+        finish.setTextSize(15);
+        finish.setMinHeight(dp(48));
+        LinearLayout.LayoutParams finishParams=new LinearLayout.LayoutParams(-1,dp(48));
+        finishParams.bottomMargin=dp(8);
+        panel.addView(finish,finishParams);
+
+        Button continueButton=button("Continue routine",()->{
+            dialog.dismiss();
+            continueRoutineAfterFirstTask();
+        });
+        continueButton.setTextColor(Color.WHITE);
+        continueButton.setTextSize(16);
+        continueButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));
+        LinearLayout.LayoutParams continueParams=new LinearLayout.LayoutParams(-1,dp(52));
+        panel.addView(continueButton,continueParams);
+
+        dialog.setContentView(panel);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        android.view.Window window=dialog.getWindow();
+        if(window!=null){
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(Math.min(dp(340),getResources().getDisplayMetrics().widthPixels-dp(32)),-2);
+        }
     }
 
     private void continueRoutineAfterFirstTask(){
