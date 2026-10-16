@@ -742,10 +742,10 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams routineLabelParams=new LinearLayout.LayoutParams(-1,-2);routineLabelParams.topMargin=dp(10);form.addView(routineLabel,routineLabelParams);
         final Button[] routineButtonLabel={null};
         routineButtonLabel[0]=button(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0],()->{
-            String[] periods={"Morning","Evening","Night"};
-            new AlertDialog.Builder(this).setTitle("Move task to routine").setItems(periods,(dialog,which)->{
-                chosenPeriod[0]=periods[which];routineButtonLabel[0].setText(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0]);
-            }).show();
+            showRoutinePeriodPicker(chosenPeriod[0],period->{
+                chosenPeriod[0]=period;
+                routineButtonLabel[0].setText(periodEmoji(chosenPeriod[0])+"  "+chosenPeriod[0]);
+            });
         });
         form.addView(routineButtonLabel[0]);
         TextView notesLabel=text("NOTES (OPTIONAL)",12,MUTED,true);notesLabel.setGravity(Gravity.START);
@@ -897,6 +897,70 @@ public class MainActivity extends Activity {
         prefs.edit().putBoolean("single_task_mode",singleTaskMode).putBoolean("timer_screen_active",true).putLong("routine_start_time",started).putString("routine_session_saved_id","").apply();
         persistTimer();
         showTimer();
+    }
+
+    private interface PeriodChoice { void selected(String period); }
+
+    private void showRoutinePeriodPicker(String selectedPeriod,PeriodChoice onSelected){
+        Dialog dialog=new Dialog(this);
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(1);
+        panel.setPadding(dp(20),dp(20),dp(20),dp(18));
+        android.graphics.drawable.GradientDrawable panelBg=new android.graphics.drawable.GradientDrawable();
+        panelBg.setColor(Color.WHITE);
+        panelBg.setCornerRadius(dp(22));
+        panel.setBackground(panelBg);
+
+        LinearLayout iconBox=new LinearLayout(this);
+        iconBox.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable iconBg=new android.graphics.drawable.GradientDrawable();
+        iconBg.setColor(Color.rgb(233,238,255));
+        iconBg.setCornerRadius(dp(13));
+        iconBox.setBackground(iconBg);
+        iconBox.addView(text("↗",25,Color.rgb(64,89,169),true));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(50),dp(50));
+        iconParams.gravity=Gravity.CENTER_HORIZONTAL;
+        iconParams.bottomMargin=dp(12);
+        panel.addView(iconBox,iconParams);
+
+        TextView title=text("Move task to routine",21,INK,true);
+        panel.addView(title);
+        TextView subtitle=text("Choose where this task belongs.",14,MUTED,false);
+        LinearLayout.LayoutParams subtitleParams=new LinearLayout.LayoutParams(-1,-2);
+        subtitleParams.topMargin=dp(5);
+        subtitleParams.bottomMargin=dp(14);
+        panel.addView(subtitle,subtitleParams);
+
+        for(String period:new String[]{"Morning","Evening","Night"}){
+            boolean selected=period.equals(selectedPeriod);
+            Button choice=button(periodEmoji(period)+"  "+period+(selected?"   ✓":""),()->{
+                dialog.dismiss();
+                onSelected.selected(period);
+            });
+            choice.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+            choice.setPadding(dp(14),0,dp(12),0);
+            choice.setMinHeight(dp(50));
+            choice.setBackgroundTintList(android.content.res.ColorStateList.valueOf(selected?Color.rgb(233,238,255):PALE));
+            choice.setTextColor(selected?Color.rgb(64,89,169):INK);
+            LinearLayout.LayoutParams choiceParams=new LinearLayout.LayoutParams(-1,dp(50));
+            choiceParams.bottomMargin=dp(7);
+            panel.addView(choice,choiceParams);
+        }
+        Button cancel=button("Cancel",()->dialog.dismiss());
+        cancel.setMinHeight(dp(46));
+        LinearLayout.LayoutParams cancelParams=new LinearLayout.LayoutParams(-1,dp(46));
+        cancelParams.topMargin=dp(2);
+        panel.addView(cancel,cancelParams);
+
+        dialog.setContentView(panel);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        android.view.Window window=dialog.getWindow();
+        if(window!=null){
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(Math.min(dp(340),getResources().getDisplayMetrics().widthPixels-dp(32)),-2);
+        }
     }
 
     private void showStyledConfirmation(String icon,String titleText,String messageText,String cancelLabel,String confirmLabel,boolean destructive,Runnable onConfirm){
