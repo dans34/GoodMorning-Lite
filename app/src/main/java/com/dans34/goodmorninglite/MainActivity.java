@@ -57,6 +57,8 @@ public class MainActivity extends Activity {
     private TextView countdownView;
     private Button pauseButton;
     private boolean completionAnimationRunning=false;
+    private TextView greetingView;
+    private Runnable greetingUpdater;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -73,8 +75,16 @@ public class MainActivity extends Activity {
             showPage();
         }
     }
+    @Override protected void onResume() {
+        super.onResume();
+        if(greetingView!=null){
+            greetingView.setText(greetingForCurrentTime());
+            scheduleGreetingRefresh();
+        }
+    }
     @Override protected void onPause() {
         super.onPause();
+        if(greetingUpdater!=null)handler.removeCallbacks(greetingUpdater);
         if(timerRunning){remainingMs=Math.max(0,deadlineMs-System.currentTimeMillis());timerRunning=false;}
         if(ticker!=null)handler.removeCallbacks(ticker);
         persistTimer();
@@ -138,7 +148,18 @@ public class MainActivity extends Activity {
         int hour=java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
         if(hour>=5 && hour<12)return "Good Morning";
         if(hour>=12 && hour<17)return "Good Afternoon";
-        return "Good Evening";
+        if(hour>=17 && hour<21)return "Good Evening";
+        return "Good Night";
+    }
+    private void scheduleGreetingRefresh(){
+        if(greetingUpdater!=null)handler.removeCallbacks(greetingUpdater);
+        greetingUpdater=()->{
+            if(greetingView!=null && greetingView.isShown()){
+                greetingView.setText(greetingForCurrentTime());
+                handler.postDelayed(greetingUpdater,60_000L);
+            }
+        };
+        handler.postDelayed(greetingUpdater,60_000L);
     }
     private void showHome(){
         managePageOpen=false;
@@ -147,9 +168,10 @@ public class MainActivity extends Activity {
         root.setPadding(dp(22),dp(8),dp(22),dp(16));
         LinearLayout header=new LinearLayout(this);header.setOrientation(0);header.setGravity(Gravity.TOP);
         LinearLayout titleBlock=new LinearLayout(this);titleBlock.setOrientation(1);
-        TextView greeting=text(greetingForCurrentTime(),25,INK,true);greeting.setGravity(Gravity.START);
+        greetingView=text(greetingForCurrentTime(),25,INK,true);greetingView.setGravity(Gravity.START);
         TextView subtitle=text("Your routine, one step at a time.",15,MUTED,false);subtitle.setGravity(Gravity.START);
-        titleBlock.addView(greeting);LinearLayout.LayoutParams subParams=new LinearLayout.LayoutParams(-1,-2);subParams.topMargin=dp(3);titleBlock.addView(subtitle,subParams);
+        titleBlock.addView(greetingView);LinearLayout.LayoutParams subParams=new LinearLayout.LayoutParams(-1,-2);subParams.topMargin=dp(3);titleBlock.addView(subtitle,subParams);
+        scheduleGreetingRefresh();
         header.addView(titleBlock,new LinearLayout.LayoutParams(0,-2,1));
         LinearLayout actions=new LinearLayout(this);actions.setOrientation(0);actions.setGravity(Gravity.TOP);
         Button add=new Button(this);add.setText("+");add.setTextSize(28);add.setAllCaps(false);add.setTextColor(INK);
