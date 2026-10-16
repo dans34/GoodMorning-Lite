@@ -397,9 +397,25 @@ public class MainActivity extends Activity {
     private void showTaskLibrary(){
         startScreen();
         LinearLayout top=new LinearLayout(this);top.setOrientation(0);top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title=text("Add a task",25,INK,true);title.setGravity(Gravity.START);
-        top.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        Button close=button("✕",this::showHome);close.setMinWidth(dp(44));top.addView(close);root.addView(top);
+        LinearLayout titleGroup=new LinearLayout(this);titleGroup.setOrientation(0);titleGroup.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout taskIcon=new LinearLayout(this);taskIcon.setGravity(Gravity.CENTER);
+        taskIcon.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.rgb(233,238,255));setCornerRadius(dp(12));}
+        });
+        TextView taskIconGlyph=text("☑",24,Color.rgb(64,89,169),true);taskIcon.addView(taskIconGlyph);
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(44),dp(44));iconParams.rightMargin=dp(12);
+        titleGroup.addView(taskIcon,iconParams);
+        TextView title=text("Add a task",25,INK,true);title.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+        titleGroup.addView(title,new LinearLayout.LayoutParams(-2,-2));
+        top.addView(titleGroup,new LinearLayout.LayoutParams(0,-2,1));
+        Button close=button("×",this::showHome);
+        close.setTextSize(22);close.setPadding(0,0,0,dp(2));close.setMinWidth(0);close.setMinimumWidth(0);
+        close.setMinHeight(0);close.setMinimumHeight(0);close.setContentDescription("Close add task");
+        close.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.rgb(242,243,246));setShape(android.graphics.drawable.GradientDrawable.OVAL);}
+        });
+        LinearLayout.LayoutParams closeParams=new LinearLayout.LayoutParams(dp(40),dp(40));
+        top.addView(close,closeParams);root.addView(top);
         TextView sub=text("Choose an idea for your "+activePeriod.toLowerCase(Locale.ROOT)+" routine.",15,MUTED,false);sub.setGravity(Gravity.START);
         LinearLayout.LayoutParams subp=new LinearLayout.LayoutParams(-1,-2);subp.topMargin=dp(6);subp.bottomMargin=dp(12);root.addView(sub,subp);
         Button templatesButton=button("📋  Browse routine templates  ›",this::showRoutineTemplates);
