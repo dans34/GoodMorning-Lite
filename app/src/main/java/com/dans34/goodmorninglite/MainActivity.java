@@ -576,15 +576,43 @@ public class MainActivity extends Activity {
         TextView nameLabel=text("TASK NAME",12,MUTED,true);nameLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams nameLabelParams=new LinearLayout.LayoutParams(-1,-2);nameLabelParams.topMargin=dp(6);form.addView(nameLabel,nameLabelParams);
         EditText name=new EditText(this);name.setHint("What do you want to do?");name.setSingleLine(true);name.setText(old.name);form.addView(name,new LinearLayout.LayoutParams(-1,dp(52)));
-        TextView durationLabel=text("DURATION (MINUTES)",12,MUTED,true);durationLabel.setGravity(Gravity.START);
+        TextView durationLabel=text("DURATION",12,MUTED,true);durationLabel.setGravity(Gravity.START);
         LinearLayout.LayoutParams durationLabelParams=new LinearLayout.LayoutParams(-1,-2);durationLabelParams.topMargin=dp(10);form.addView(durationLabel,durationLabelParams);
-        android.widget.NumberPicker minutes=new android.widget.NumberPicker(this);
-        minutes.setMinValue(1);minutes.setMaxValue(240);minutes.setValue(Math.max(1,Math.min(240,(old.seconds+59)/60)));
-        minutes.setWrapSelectorWheel(false);
-        LinearLayout durationPickerRow=new LinearLayout(this);durationPickerRow.setOrientation(0);durationPickerRow.setGravity(Gravity.CENTER_VERTICAL);
-        durationPickerRow.addView(minutes,new LinearLayout.LayoutParams(dp(100),dp(112)));
-        TextView minutesUnit=text("minutes",15,MUTED,false);minutesUnit.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams minutesUnitParams=new LinearLayout.LayoutParams(-2,-1);minutesUnitParams.leftMargin=dp(8);durationPickerRow.addView(minutesUnit,minutesUnitParams);
+        final int[] chosenMinutes={Math.max(1,Math.min(240,(old.seconds+59)/60))};
+        LinearLayout durationPickerRow=new LinearLayout(this);durationPickerRow.setOrientation(0);durationPickerRow.setGravity(Gravity.CENTER);
+        Button minusMinutes=button("−",()->{});
+        minusMinutes.setTextSize(24);minusMinutes.setPadding(0,0,0,dp(2));minusMinutes.setMinWidth(0);minusMinutes.setMinimumWidth(0);
+        minusMinutes.setMinHeight(0);minusMinutes.setMinimumHeight(0);
+        minusMinutes.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.rgb(242,243,246));setCornerRadius(dp(12));}
+        });
+        TextView durationValue=text(String.valueOf(chosenMinutes[0]),28,INK,true);durationValue.setGravity(Gravity.CENTER);
+        TextView minutesUnit=text(chosenMinutes[0]==1?"minute":"minutes",13,MUTED,false);minutesUnit.setGravity(Gravity.CENTER);
+        LinearLayout durationValueGroup=new LinearLayout(this);durationValueGroup.setOrientation(1);durationValueGroup.setGravity(Gravity.CENTER);
+        durationValueGroup.addView(durationValue,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout.LayoutParams unitParams=new LinearLayout.LayoutParams(-1,-2);unitParams.topMargin=dp(1);durationValueGroup.addView(minutesUnit,unitParams);
+        Button plusMinutes=button("+",()->{});
+        plusMinutes.setTextSize(24);plusMinutes.setPadding(0,0,0,dp(2));plusMinutes.setMinWidth(0);plusMinutes.setMinimumWidth(0);
+        plusMinutes.setMinHeight(0);plusMinutes.setMinimumHeight(0);
+        plusMinutes.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.rgb(242,243,246));setCornerRadius(dp(12));}
+        });
+        LinearLayout.LayoutParams stepperButtonParams=new LinearLayout.LayoutParams(dp(48),dp(48));
+        durationPickerRow.addView(minusMinutes,stepperButtonParams);
+        LinearLayout.LayoutParams durationValueParams=new LinearLayout.LayoutParams(dp(104),dp(64));durationValueParams.leftMargin=dp(12);durationValueParams.rightMargin=dp(12);
+        durationPickerRow.addView(durationValueGroup,durationValueParams);
+        durationPickerRow.addView(plusMinutes,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        Runnable updateDurationDisplay=()->{
+            durationValue.setText(String.valueOf(chosenMinutes[0]));
+            minutesUnit.setText(chosenMinutes[0]==1?"minute":"minutes");
+            minusMinutes.setEnabled(chosenMinutes[0]>1);
+            plusMinutes.setEnabled(chosenMinutes[0]<240);
+            minusMinutes.setAlpha(chosenMinutes[0]>1?1f:0.45f);
+            plusMinutes.setAlpha(chosenMinutes[0]<240?1f:0.45f);
+        };
+        minusMinutes.setOnClickListener(v->{if(chosenMinutes[0]>1){chosenMinutes[0]--;updateDurationDisplay.run();}});
+        plusMinutes.setOnClickListener(v->{if(chosenMinutes[0]<240){chosenMinutes[0]++;updateDurationDisplay.run();}});
+        updateDurationDisplay.run();
         form.addView(durationPickerRow);
         final String[] chosenPeriod={old.period==null||old.period.isEmpty()?activePeriod:old.period};
         TextView routineLabel=text("ROUTINE",12,MUTED,true);routineLabel.setGravity(Gravity.START);
@@ -670,7 +698,7 @@ public class MainActivity extends Activity {
         saveButton.setOnClickListener(v->{
             String n=name.getText().toString().trim();
             if(n.isEmpty()){name.setError("Enter a task name");name.requestFocus();return;}
-            int mins=Math.max(1,Math.min(240,minutes.getValue()));
+            int mins=Math.max(1,Math.min(240,chosenMinutes[0]));
             Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),chosenPeriod[0]):new Task(old.id,n,mins*60,notes.getText().toString().trim(),chosenPeriod[0]);
             t.emoji=chosenEmoji[0];
             if(add)tasks.add(t);else tasks.set(index,t);
