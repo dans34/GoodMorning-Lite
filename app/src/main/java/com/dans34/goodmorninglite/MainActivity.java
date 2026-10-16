@@ -428,7 +428,7 @@ public class MainActivity extends Activity {
         HorizontalScrollView tabsScroll=new HorizontalScrollView(this);tabsScroll.setHorizontalScrollBarEnabled(false);
         tabsScroll.setFillViewport(false);
         LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(0);
-        for(String cat:new String[]{"Everyday","Home","Errands","People","Movement","Focus","Unwind"}){
+        for(String cat:libraryCategories()){
             final String chosen=cat;Button tab=button((libraryCategory.equals(cat)?"●  ":"")+cat,()->{libraryCategory=chosen;showTaskLibrary();});
             tab.setTextSize(13);tab.setPadding(dp(12),0,dp(12),0);
             tab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(libraryCategory.equals(cat)?INK:PALE));
@@ -438,7 +438,7 @@ public class MainActivity extends Activity {
         tabsScroll.addView(tabs);root.addView(tabsScroll);
         tabsScroll.post(()->{
             int selectedIndex=0;
-            String[] categories={"Everyday","Home","Errands","People","Movement","Focus","Unwind"};
+            String[] categories=libraryCategories();
             for(int i=0;i<categories.length;i++)if(categories[i].equals(libraryCategory)){selectedIndex=i;break;}
             View selectedTab=tabs.getChildAt(selectedIndex);
             if(selectedTab!=null){
@@ -447,18 +447,19 @@ public class MainActivity extends Activity {
             }
         });
         ScrollView listScroll=new ScrollView(this);LinearLayout list=new LinearLayout(this);list.setOrientation(1);
-        for(LibraryTask item:libraryTasks)if(item.category.equals(libraryCategory)){
+        for(LibraryTask item:allLibraryTasks())if(item.category.equals(libraryCategory)){
             LinearLayout row=new LinearLayout(this);row.setOrientation(0);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(10),0,dp(10));
+            row.setClickable(true);row.setFocusable(true);row.setOnClickListener(v->previewLibraryTask(item));
             TextView emoji=text(item.emoji,23,INK,false);row.addView(emoji,new LinearLayout.LayoutParams(dp(42),-2));
             LinearLayout details=new LinearLayout(this);details.setOrientation(1);
             TextView name=text(item.name,16,INK,true);name.setGravity(Gravity.START);
-            TextView meta=text(item.minutes+" min",13,MUTED,true);meta.setGravity(Gravity.START);
+            TextView meta=text(item.minutes+" min · Preview details",13,MUTED,true);meta.setGravity(Gravity.START);
             TextView desc=text(item.description,13,MUTED,false);desc.setGravity(Gravity.START);
             details.addView(name);LinearLayout.LayoutParams metap=new LinearLayout.LayoutParams(-1,-2);metap.topMargin=dp(2);details.addView(meta,metap);
             LinearLayout.LayoutParams descp=new LinearLayout.LayoutParams(-1,-2);descp.topMargin=dp(3);details.addView(desc,descp);
             row.addView(details,new LinearLayout.LayoutParams(0,-2,1));
-            Button plus=button("+",()->addLibraryTask(item));plus.setTextSize(23);plus.setMinWidth(0);plus.setMinimumWidth(0);
-            plus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));row.addView(plus,new LinearLayout.LayoutParams(dp(44),dp(44)));
+            Button preview=button("›",()->previewLibraryTask(item));preview.setTextSize(25);preview.setMinWidth(0);preview.setMinimumWidth(0);
+            preview.setContentDescription("Preview "+item.name);preview.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));row.addView(preview,new LinearLayout.LayoutParams(dp(44),dp(44)));
             list.addView(row,new LinearLayout.LayoutParams(-1,-2));
             View line=new View(this);line.setBackgroundColor(Color.rgb(239,239,242));list.addView(line,new LinearLayout.LayoutParams(-1,dp(1)));
         }
@@ -675,6 +676,40 @@ public class MainActivity extends Activity {
         saveTasks();
         Toast.makeText(this,template.name+" added to "+activePeriod+" routine",Toast.LENGTH_SHORT).show();
         showManageRoutines();
+    }
+    private String[] libraryCategories(){
+        java.util.LinkedHashSet<String> categories=new java.util.LinkedHashSet<>();
+        for(LibraryTask item:libraryTasks)categories.add(item.category);
+        for(RoutineTemplate template:routineTemplates)for(LibraryTask item:template.items)categories.add(item.category);
+        return categories.toArray(new String[0]);
+    }
+    private ArrayList<LibraryTask> allLibraryTasks(){
+        ArrayList<LibraryTask> all=new ArrayList<>();
+        for(LibraryTask item:libraryTasks)addUniqueLibraryTask(all,item);
+        for(RoutineTemplate template:routineTemplates)for(LibraryTask item:template.items)addUniqueLibraryTask(all,item);
+        return all;
+    }
+    private void addUniqueLibraryTask(ArrayList<LibraryTask> all,LibraryTask candidate){
+        for(LibraryTask existing:all)if(existing.name.equalsIgnoreCase(candidate.name))return;
+        all.add(candidate);
+    }
+    private void previewLibraryTask(LibraryTask item){
+        Dialog dialog=new Dialog(this);
+        LinearLayout panel=new LinearLayout(this);panel.setOrientation(1);panel.setPadding(dp(22),dp(20),dp(22),dp(20));
+        android.graphics.drawable.GradientDrawable panelBg=new android.graphics.drawable.GradientDrawable();panelBg.setColor(Color.WHITE);panelBg.setCornerRadius(dp(22));panel.setBackground(panelBg);
+        LinearLayout iconBox=new LinearLayout(this);iconBox.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable iconBg=new android.graphics.drawable.GradientDrawable();iconBg.setColor(Color.rgb(233,238,255));iconBg.setCornerRadius(dp(16));iconBox.setBackground(iconBg);
+        iconBox.addView(text(item.emoji,30,INK,false));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(62),dp(62));iconParams.gravity=Gravity.CENTER_HORIZONTAL;iconParams.bottomMargin=dp(12);panel.addView(iconBox,iconParams);
+        TextView title=text(item.name,21,INK,true);title.setGravity(Gravity.CENTER);title.setLineSpacing(dp(1),1f);panel.addView(title);
+        TextView category=text(item.category+" · "+item.minutes+" "+(item.minutes==1?"minute":"minutes"),13,MUTED,true);
+        LinearLayout.LayoutParams categoryParams=new LinearLayout.LayoutParams(-1,-2);categoryParams.topMargin=dp(6);categoryParams.bottomMargin=dp(12);panel.addView(category,categoryParams);
+        TextView description=text(item.description,15,MUTED,false);description.setGravity(Gravity.CENTER);description.setLineSpacing(dp(2),1f);
+        LinearLayout.LayoutParams descriptionParams=new LinearLayout.LayoutParams(-1,-2);descriptionParams.bottomMargin=dp(18);panel.addView(description,descriptionParams);
+        Button cancel=button("Cancel",()->dialog.dismiss());cancel.setMinHeight(dp(46));LinearLayout.LayoutParams cancelParams=new LinearLayout.LayoutParams(-1,dp(46));cancelParams.bottomMargin=dp(8);panel.addView(cancel,cancelParams);
+        Button add=button("Add task to "+activePeriod,()->{dialog.dismiss();addLibraryTask(item);});add.setTextColor(Color.WHITE);add.setTextSize(15);add.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));panel.addView(add,new LinearLayout.LayoutParams(-1,dp(50)));
+        dialog.setContentView(panel);dialog.setCancelable(true);dialog.setCanceledOnTouchOutside(true);dialog.show();
+        android.view.Window window=dialog.getWindow();if(window!=null){window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));window.setLayout(Math.min(dp(340),getResources().getDisplayMetrics().widthPixels-dp(32)),-2);}
     }
     private void addLibraryTask(LibraryTask item){
         Task added=new Task(item.name,item.minutes*60,item.description,activePeriod);added.emoji=item.emoji;tasks.add(added);saveTasks();
