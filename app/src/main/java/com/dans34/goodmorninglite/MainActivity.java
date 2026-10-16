@@ -618,15 +618,72 @@ public class MainActivity extends Activity {
         }
         LinearLayout.LayoutParams gridParams=new LinearLayout.LayoutParams(-1,-2);gridParams.topMargin=dp(6);emojiSection.addView(emojiGrid,gridParams);
         form.addView(emojiSection);
-        new AlertDialog.Builder(this).setTitle(add?"Add task":"Edit task").setView(form).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
+
+        // Custom editor layout keeps the task form visually consistent with the app's screens.
+        LinearLayout dialogContent=new LinearLayout(this);dialogContent.setOrientation(1);
+        dialogContent.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.WHITE);setCornerRadius(dp(22));}
+        });
+        LinearLayout dialogHeader=new LinearLayout(this);dialogHeader.setOrientation(0);dialogHeader.setGravity(Gravity.CENTER_VERTICAL);
+        dialogHeader.setPadding(dp(20),dp(18),dp(14),dp(12));
+        LinearLayout headerIcon=new LinearLayout(this);headerIcon.setGravity(Gravity.CENTER);
+        headerIcon.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.rgb(233,238,255));setCornerRadius(dp(12));}
+        });
+        TextView headerGlyph=text(add?"☑":"✎",23,Color.rgb(64,89,169),true);headerIcon.addView(headerGlyph);
+        LinearLayout.LayoutParams headerIconParams=new LinearLayout.LayoutParams(dp(44),dp(44));headerIconParams.rightMargin=dp(12);
+        dialogHeader.addView(headerIcon,headerIconParams);
+        LinearLayout headerText=new LinearLayout(this);headerText.setOrientation(1);
+        TextView dialogTitle=text(add?"Add a task":"Edit task",21,INK,true);dialogTitle.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+        TextView dialogSubtitle=text(add?"Make it fit your routine":"Update the details below",13,MUTED,false);dialogSubtitle.setGravity(Gravity.START);
+        LinearLayout.LayoutParams subtitleParams=new LinearLayout.LayoutParams(-1,-2);subtitleParams.topMargin=dp(2);
+        headerText.addView(dialogTitle);headerText.addView(dialogSubtitle,subtitleParams);
+        dialogHeader.addView(headerText,new LinearLayout.LayoutParams(0,-2,1));
+        Button closeDialog=button("×",()->{});
+        closeDialog.setTextSize(22);closeDialog.setPadding(0,0,0,dp(2));closeDialog.setMinWidth(0);closeDialog.setMinimumWidth(0);
+        closeDialog.setMinHeight(0);closeDialog.setMinimumHeight(0);closeDialog.setContentDescription("Close task editor");
+        closeDialog.setBackground(new android.graphics.drawable.GradientDrawable(){
+            {setColor(Color.rgb(242,243,246));setShape(android.graphics.drawable.GradientDrawable.OVAL);}
+        });
+        dialogHeader.addView(closeDialog,new LinearLayout.LayoutParams(dp(38),dp(38)));
+        dialogContent.addView(dialogHeader);
+
+        ScrollView formScroll=new ScrollView(this);formScroll.setFillViewport(false);formScroll.setClipToPadding(false);
+        formScroll.addView(form,new ScrollView.LayoutParams(-1,-2));
+        dialogContent.addView(formScroll,new LinearLayout.LayoutParams(-1,0,1));
+
+        LinearLayout footer=new LinearLayout(this);footer.setOrientation(0);footer.setGravity(Gravity.CENTER_VERTICAL);
+        footer.setPadding(dp(20),dp(10),dp(20),dp(16));
+        Button cancelButton=button("Cancel",()->{});cancelButton.setTextColor(INK);
+        cancelButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(PALE));
+        Button saveButton=button(add?"Create task":"Save changes",()->{});
+        saveButton.setTextColor(Color.WHITE);saveButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(INK));
+        LinearLayout.LayoutParams footerButtonParams=new LinearLayout.LayoutParams(0,dp(48),1);
+        footerButtonParams.rightMargin=dp(8);footer.addView(cancelButton,footerButtonParams);
+        LinearLayout.LayoutParams saveButtonParams=new LinearLayout.LayoutParams(0,dp(48),1);
+        saveButtonParams.leftMargin=dp(8);footer.addView(saveButton,saveButtonParams);
+        dialogContent.addView(footer);
+
+        AlertDialog dialog=new AlertDialog.Builder(this).setView(dialogContent).create();
+        closeDialog.setOnClickListener(v->dialog.dismiss());
+        cancelButton.setOnClickListener(v->dialog.dismiss());
+        saveButton.setOnClickListener(v->{
             String n=name.getText().toString().trim();
-            if(n.isEmpty()){Toast.makeText(this,"Enter a task name.",Toast.LENGTH_SHORT).show();return;}
+            if(n.isEmpty()){name.setError("Enter a task name");name.requestFocus();return;}
             int mins=Math.max(1,Math.min(240,minutes.getValue()));
             Task t=add?new Task(n,mins*60,notes.getText().toString().trim(),chosenPeriod[0]):new Task(old.id,n,mins*60,notes.getText().toString().trim(),chosenPeriod[0]);
             t.emoji=chosenEmoji[0];
             if(add)tasks.add(t);else tasks.set(index,t);
-            saveTasks();returnToRoutinePage();
-        }).show();
+            saveTasks();dialog.dismiss();returnToRoutinePage();
+        });
+        dialog.setOnShowListener(ignored->{
+            if(dialog.getWindow()!=null){
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                int screenHeight=getResources().getDisplayMetrics().heightPixels;
+                dialog.getWindow().setLayout(getResources().getDisplayMetrics().widthPixels-dp(32),Math.min((int)(screenHeight*0.84),dp(760)));
+            }
+        });
+        dialog.show();
     }
     private void showTimer(){
         if(ticker!=null)handler.removeCallbacks(ticker);
